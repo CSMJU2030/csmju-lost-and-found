@@ -1,0 +1,189 @@
+@import 'tailwindcss';
+
+/* design token ของ CSMJU2030 (ui-design-system.md ข้อ 3) — Tailwind v4 สร้าง utility จาก @theme ให้เอง เช่น bg-primary-container */
+
+@theme {
+  --font-sans: var(--font-body), system-ui, sans-serif;
+  --font-display: var(--font-display-face), var(--font-body), sans-serif;
+
+  --color-primary-container: #2154d9;
+  --color-primary: #003cb4;
+  --color-primary-fixed: #dce1ff;
+  --color-on-primary-container: #d2daff;
+  --color-secondary: #4e5d87;
+  --color-accent: #3b80f2;
+  --color-background: #f8f9fa;
+  --color-surface: #f8f9fa;
+  --color-surface-container-lowest: #ffffff;
+  --color-surface-container-low: #f3f4f5;
+  --color-surface-container: #edeeef;
+  --color-surface-variant: #e1e3e4;
+  --color-on-surface: #191c1d;
+  --color-on-surface-variant: #434654;
+  --color-outline: #747686;
+  --color-outline-variant: #c4c5d7;
+  --color-success: #10b981;
+  --color-error: #ba1a1a;
+  --color-error-container: #ffdad6;
+  --color-on-error-container: #93000a;
+
+  --color-brand-50: #e9eefb;
+  --color-brand-100: #d3ddf7;
+  --color-brand-200: #bcccf4;
+  --color-brand-500: #3b80f2;
+  --color-brand-600: #2154d9;
+  --color-brand-700: #003cb4;
+  --color-brand-navy: #16264d;
+  --color-brand-blue: #0d4fa8;
+  --color-brand-amber: #f59e0b;
+
+  --color-ink: #191c1d;
+  --color-line: #e1e3e4;
+
+  --shadow-card: 0 1px 2px rgba(25, 28, 29, 0.05);
+  --shadow-lift: 0 4px 12px rgba(33, 84, 217, 0.1);
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
+
+@utility animate-fade-in {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@utility animate-slide-in {
+  animation: slideIn 0.3s ease-out;
+}
+
+@utility bg-brand-gradient {
+  /* gradient ของแบรนด์ มีแค่ 2 แบบ (ui-design-system ข้อ 3.1) */
+  background-image: linear-gradient(
+    135deg,
+    var(--color-brand-navy) 0%,
+    var(--color-brand-blue) 100%
+  );
+}
+
+@utility btn-gradient {
+  background-image: linear-gradient(
+    90deg,
+    var(--color-primary-container) 0%,
+    var(--color-accent) 100%
+  );
+  background-size: 150% 100%;
+  background-position: 0% 0%;
+  transition:
+    background-position 150ms ease-out,
+    transform 150ms ease-out,
+    box-shadow 150ms ease-out;
+  &:hover:not(:disabled) {
+    background-position: 100% 0%;
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.98);
+  }
+}
+
+@utility bg-dots {
+  background-image: radial-gradient(
+    rgba(255, 255, 255, 0.16) 1px,
+    transparent 1px
+  );
+  background-size: 18px 18px;
+}
+
+@layer base {
+  html {
+    -webkit-font-smoothing: antialiased;
+  }
+  body {
+    @apply bg-background text-on-surface font-sans;
+  }
+  /* ห้าม letter-spacing ติดลบกับข้อความไทย (ui-design-system ข้อ 4.3) */
+  h1, h2, h3, h4 {
+    @apply font-display;
+  }
+  ::selection {
+    @apply bg-brand-100 text-primary;
+  }
+  :focus-visible {
+    outline: 2px solid var(--color-primary-container);
+    outline-offset: 2px;
+  }
+}
+
+@layer utilities {
+  /* Custom scrollbar */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-outline-variant);
+    border-radius: 999px;
+    border: 2px solid var(--color-background);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-outline);
+  }
+
+  /* Animation */
+}
+
+@layer utilities {
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  @keyframes slideIn {
+    from {
+      transform: translateX(-100%);
+    }
+    to {
+      transform: translateX(0);
+    }
+  }
+
+  /* select แบบ native (ที่ไม่ได้ใช้คอมโพเนนต์ Select) ให้หน้าตาเหมือนช่องกรอกอื่น */
+}
+@layer base {
+  select:not(.appearance-none):not([multiple]) {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23747686' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2.25rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .btn-gradient,
+  .animate-fade-in,
+  .animate-slide-in {
+    transition-duration: 1ms !important;
+    animation-duration: 1ms !important;
+  }
+}

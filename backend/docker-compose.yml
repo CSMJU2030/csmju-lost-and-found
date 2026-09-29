@@ -1,0 +1,23 @@
+# PostgreSQL สำหรับพัฒนา: docker compose up -d
+# สร้างตารางด้วย migration ของ Prisma: npm run db:deploy (สร้างฐานข้อมูลให้เองถ้ายังไม่มี)
+services:
+  db:
+    image: postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-lostfound}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lostfound}
+      # ชื่อฐานข้อมูลตามมาตรฐาน: <subsystem>_db
+      POSTGRES_DB: ${POSTGRES_DB:-lost_and_found_db}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lostfound} -d ${POSTGRES_DB:-lost_and_found_db}"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  pgdata:

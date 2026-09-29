@@ -1,5 +1,20 @@
 {
   "name": "csmju-lost-and-found",
+  "version": "1.0.0",
   "private": true,
-  "packageManager": "pnpm@9.15.9"
+  "description": "Lost & Found - ระบบย่อย csmju-lost-and-found ของ CSMJU2030",
+  "scripts": {
+    "dev": "pnpm --parallel --filter backend --filter frontend dev",
+    "build": "pnpm -r build",
+    "lint": "pnpm -r lint",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm --filter backend test",
+    "test:e2e": "pnpm --filter backend test:e2e",
+    "conformance": "node standards/conformance/run.js",
+    "checks": "bash standards/scripts/run-all-checks.sh ."
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "packageManager": "pnpm@12.3.4"
 }
