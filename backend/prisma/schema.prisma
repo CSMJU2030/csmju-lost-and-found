@@ -1,0 +1,198 @@
+// โครงสร้างฐานข้อมูล Lost & Found (ฐานข้อมูลของระบบย่อย: lost_and_found_db)
+// ตามมาตรฐาน csmju2030-standards/docs/data-dictionary.md
+//   - ตาราง plural snake_case · คอลัมน์ snake_case ผ่าน @map/@@map · field ใน Prisma เป็น camelCase
+//   - primary key = id (UUID v4) · ทุกตารางมี created_at, updated_at (timestamptz)
+//   - enum PascalCase ค่า UPPER_SNAKE_CASE
+//   - อ้างถึงผู้ใช้ของ Core Hub ด้วย core_user_id เท่านั้น และไม่เก็บรหัสผ่าน
+//
+// แก้ไฟล์นี้แล้วต้องสร้าง migration ใหม่: npm run db:migrate -- --name <ชื่อ>
+// (ห้ามแก้/ลบ migration เดิม · เปลี่ยนชื่อคอลัมน์ต้องเขียน RENAME COLUMN เอง)
+
+generator client {
+  provider        = "prisma-client"
+  output          = "../generated/prisma"
+  moduleFormat    = "cjs"
+  // ใช้ partial unique index กันยื่นคำขอซ้ำ (claims_active_claimant_key) ให้อยู่ใน schema ไม่ใช่ SQL ที่เขียนแยก
+  previewFeatures = ["partialIndexes"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+/// สิทธิ์ภายในระบบ Lost & Found (Layer 2) — ADMIN = เจ้าหน้าที่/อาจารย์, USER = ผู้ใช้ทั่วไป
+enum MemberRole {
+  USER
+  ADMIN
+}
+
+/// role จาก Core Hub (Layer 1, claim `role` ใน access token) — ระบบย่อยห้ามแก้เอง
+enum CoreRole {
+  STUDENT
+  ALUMNI
+  STAFF
+  ADMIN
+}
+
+/// LOST = แจ้งของหาย (ตามหา) · FOUND = แจ้งพบของ (เก็บได้)
+enum ReportType {
+  LOST
+  FOUND
+}
+
+enum ItemStatus {
+  SEARCHING
+  FOUND
+  RETURNED
+}
+
+enum ItemUrgency {
+  NORMAL
+  HIGH
+}
+
+enum ClaimStatus {
+  PENDING
+  APPROVED
+  AT_OFFICE
+  REJECTED
+  COMPLETED
+}
+
+/// ผู้ใช้งานระบบ Lost & Found (local data) — ไม่ใช่ตาราง users ของ Core Hub
+/// เก็บเฉพาะข้อมูลที่ระบบนี้ต้องใช้ และผูกกับ Core Hub ผ่าน core_user_id
+model Member {
+  id          String     @id @default(uuid()) @db.Uuid
+  /// ค่า `sub` จาก Core Hub token เท่านั้น (ยังว่างได้ระหว่างใช้โหมด dev)
+  coreUserId  String?    @unique @map("core_user_id")
+  coreRole    CoreRole?  @map("core_role")
+  /// รหัสนักศึกษา/รหัสบุคลากร — ข้อมูลธุรกิจของระบบนี้ ใช้ระบุตัวตนในโหมด dev/external
+  studentCode String?    @unique @map("student_code")
+  /// ชื่อที่แสดง — Core Hub v1.0 ยังไม่ส่ง full_name จึงเก็บเป็น local data
+  displayName String     @map("display_name")
+  email       String?
+  /// ตัวเลขล้วน ไม่มีขีด
+  phone       String?
+  role        MemberRole @default(USER)
+  createdAt   DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  reportedItems  Item[]          @relation("ItemReporter")
+  claims         Claim[]         @relation("ClaimClaimant")
+  secretAttempts SecretAttempt[]
+
+  @@index([role])
+  @@map("members")
+}
+
+/// รายการแจ้งของหาย/แจ้งพบของ
+model Item {
+  id                  String      @id @default(uuid()) @db.Uuid
+  /// รหัสที่แสดงให้ผู้ใช้ เช่น LF-2026-00001
+  code                String      @unique
+  reportType          ReportType  @map("report_type")
+  name                String
+  description         String
+  category            String
+  location            String
+  faculty             String      @default("")
+  building            String      @default("")
+  room                String
+  /// วันที่ของหาย/พบของ (YYYY-MM-DD)
+  incidentDate        DateTime    @map("incident_date") @db.Date
+  /// เวลาโดยประมาณ (HH:MM เวลาไทย)
+  incidentTime        String      @default("") @map("incident_time")
+  status              ItemStatus
+  urgency             ItemUrgency @default(NORMAL)
+  /// path รูปใน uploads/ — รูปแรกคือรูปหลัก
+  imageUrls           String[]    @default([]) @map("image_urls")
+  pinLat              Float?      @map("pin_lat")
+  pinLng              Float?      @map("pin_lng")
+  /// คำถาม/คำตอบยืนยันความเป็นเจ้าของ (เฉพาะแจ้งพบของ) — คำตอบห้ามส่งให้คนอื่นนอกจากเจ้าของโพสต์และแอดมิน
+  secretQuestion      String?     @map("secret_question")
+  secretAnswer        String?     @map("secret_answer")
+  reporterId          String      @map("reporter_id") @db.Uuid
+  /// ข้อมูลติดต่อที่ผู้แจ้งกรอกตอนโพสต์ (อาจต่างจากข้อมูลในโปรไฟล์)
+  reporterName        String      @map("reporter_name")
+  reporterStudentCode String?     @map("reporter_student_code")
+  reporterPhone       String      @map("reporter_phone")
+  reporterContact     String      @map("reporter_contact")
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  reporter       Member          @relation("ItemReporter", fields: [reporterId], references: [id], onDelete: Restrict)
+  claims         Claim[]         @relation("ClaimItem")
+  linkedClaims   Claim[]         @relation("ClaimLinkedItem")
+  secretAttempts SecretAttempt[]
+
+  @@index([status])
+  @@index([reportType])
+  @@index([reporterId])
+  @@index([createdAt(sort: Desc)])
+  @@map("items")
+}
+
+/// คำขอรับคืน (กับของที่มีคนเก็บได้) / แจ้งส่งคืน (กับของที่มีคนตามหา)
+/// ผู้ยื่นมีคำขอที่ยังไม่ปิด (PENDING/APPROVED/AT_OFFICE) ได้ครั้งละ 1 คำขอต่อรายการ
+/// (partial unique index claims_active_claimant_key — กันกดส่งซ้ำพร้อมกัน · เขียนเงื่อนไขในรูปที่ PostgreSQL เก็บจริง ไม่งั้น migrate diff จะเห็นเป็น drift)
+model Claim {
+  id                  String      @id @default(uuid()) @db.Uuid
+  /// รหัสที่แสดงให้ผู้ใช้ เช่น REQ-1A2B3C4D
+  code                String      @unique
+  itemId              String      @map("item_id") @db.Uuid
+  claimantId          String      @map("claimant_id") @db.Uuid
+  /// โพสต์ของผู้ยื่นที่เป็นเรื่องเดียวกัน — ปิดพร้อมกันเมื่อคืนของสำเร็จ
+  linkedItemId        String?     @map("linked_item_id") @db.Uuid
+  /// ประเภทของรายการตอนยื่น: FOUND = เจ้าของขอรับคืน · LOST = ผู้พบแจ้งส่งคืน
+  claimType           ReportType  @map("claim_type")
+  claimantName        String      @map("claimant_name")
+  claimantStudentCode String?     @map("claimant_student_code")
+  /// สังกัด/คณะที่ผู้ยื่นกรอกเอง (ข้อความอิสระ ไม่ใช่ department ของ Core Hub)
+  claimantAffiliation String      @map("claimant_affiliation")
+  meetAt              DateTime    @map("meet_at") @db.Timestamptz(3)
+  meetLocation        String      @map("meet_location")
+  contact             String
+  note                String      @default("")
+  secretAnswerGiven   String?     @map("secret_answer_given")
+  status              ClaimStatus @default(PENDING)
+  /// รหัส 6 หลัก: handover = ของผู้ยื่นคำขอ · pickup = ของเจ้าของที่มารับของที่ห้องเจ้าหน้าที่
+  handoverCode        String?     @map("handover_code")
+  pickupCode          String?     @map("pickup_code")
+  approvedAt          DateTime?   @map("approved_at") @db.Timestamptz(3)
+  droppedOffAt        DateTime?   @map("dropped_off_at") @db.Timestamptz(3)
+  handedOverAt        DateTime?   @map("handed_over_at") @db.Timestamptz(3)
+  handedOverBy        String?     @map("handed_over_by")
+  giverConfirmedAt    DateTime?   @map("giver_confirmed_at") @db.Timestamptz(3)
+  receiverConfirmedAt DateTime?   @map("receiver_confirmed_at") @db.Timestamptz(3)
+  createdAt           DateTime    @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime    @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  item       Item   @relation("ClaimItem", fields: [itemId], references: [id], onDelete: Cascade)
+  claimant   Member @relation("ClaimClaimant", fields: [claimantId], references: [id], onDelete: Restrict)
+  linkedItem Item?  @relation("ClaimLinkedItem", fields: [linkedItemId], references: [id], onDelete: SetNull)
+
+  @@unique([itemId, claimantId], map: "claims_active_claimant_key", where: raw("status = ANY (ARRAY['PENDING'::\"ClaimStatus\", 'APPROVED'::\"ClaimStatus\", 'AT_OFFICE'::\"ClaimStatus\"])"))
+  @@index([itemId])
+  @@index([claimantId])
+  @@index([linkedItemId])
+  @@index([status])
+  @@index([createdAt(sort: Desc)])
+  @@map("claims")
+}
+
+/// จำนวนครั้งที่ตอบคำถามยืนยันผิด ต่อรายการ ต่อผู้ใช้ (ครบ 3 ครั้งถูกล็อก)
+model SecretAttempt {
+  id           String   @id @default(uuid()) @db.Uuid
+  itemId       String   @map("item_id") @db.Uuid
+  memberId     String   @map("member_id") @db.Uuid
+  attemptCount Int      @default(0) @map("attempt_count")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt    DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  item   Item   @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  member Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
+
+  @@unique([itemId, memberId])
+  @@index([memberId])
+  @@map("secret_attempts")
+}

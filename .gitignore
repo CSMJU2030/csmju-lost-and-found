@@ -11,3 +11,8 @@ generated/
 *.pem
 *.key
 !.env.example
+
+# Next.js / เครื่องมือ
+out/
+.DS_Store
+*.local
