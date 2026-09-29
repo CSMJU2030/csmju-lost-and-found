@@ -1,89 +1,81 @@
-# REPORT — lost-and-found
+# REPORT — csmju-lost-and-found
 
-มาตรฐาน: csmju2030-standards **v1.0.2** (submodule `standards/` ที่ tag `v1.0.2`) · ตรวจวันที่ 2026-09-28
-Core Hub ที่ใช้ทดสอบ: branch `main` (SSO 1.0) รันจริงในเครื่อง
+มาตรฐาน: csmju2030-standards **v1.0.4** (submodule `standards/` ที่ tag `v1.0.4`) · ตรวจวันที่ 2026-09-29
+repo: `CSMJU2030/csmju-lost-and-found` · Core Hub ที่ใช้ทดสอบ: branch `main` (SSO 1.0) รันจริงในเครื่อง
+
+## PR ที่ส่ง (แยกตามที่ PM ขอ)
+
+| PR | branch | เนื้อหา | CI |
+|---|---|---|---|
+| **1 เลื่อน pin** | `feature/lost-and-found/pin-standards-v1-0-4` | submodule `standards` → `v1.0.4` · `.standards-version` → `1.0.4` · `subsystem.yaml` `standards_version: "1.0.4"` · ลบ `.github/workflows/conformance-nightly.yml` (4 ไฟล์) | ตก GH-03 ตามปกติ → **PM merge** |
+| **2 งานทั้งหมด** | `feature/lost-and-found/app-standards-v1-0-4` (ต่อจาก PR 1) | backend · frontend · auth 1.0 · แผนที่ · Tailwind v4 ฯลฯ ไม่แตะ `.github/workflows/` `.github/CODEOWNERS` `standards` | ต้องผ่านเอง — ผลในเครื่องด้านล่าง |
+
+- **`ci.yml` ไม่ได้แก้:** ใน repo เป็น entry point `@v1.5.2` อยู่แล้ว (commit #2 ของ scaffold) ซึ่งเลือกชุดกฎตาม `.standards-version` เอง
+  ถ้าแก้เป็น `@v1.0.4` จะเป็นการถอย entry point ของ DevOps จึงผูก 1.0.4 ผ่าน `.standards-version` แทน
+- **ลำดับ:** เปิด PR 2 หลัง PM merge PR 1 แล้ว — ถ้าเปิดก่อน diff ของ PR 2 จะมี submodule `standards` ติดมาด้วย และ PR 2 จะตก GH-03
 
 ## ผลรัน
 
 ```
 $ node standards/conformance/run.js
 RESULT: 62 passed · 0 failed · 0 skipped
-✅ CONFORMANT — lost-and-found meets standard v1.0 L3
+✅ CONFORMANT — csmju-lost-and-found meets standard v1.0 L3
 ```
+
+```
+$ ./standards/scripts/run-all-checks.sh .      (PR 2 เทียบกับ PR 1 = สภาพหลัง merge PR 1 · ใช้ jq.exe ของ Windows ตรง ๆ ไม่ครอบ)
+✅ 17/18 · ❌ SEC-01 เจอเฉพาะ backend/.env ในเครื่อง
+$ (checkout ใหม่ที่ไม่มี .env) check-no-secrets.sh
+✅ [SEC-01/02] ไม่พบ secret หรือ .env ที่มีค่าจริง
+```
+
+| กฎ | ผล |
+|---|---|
+| GH-01 · GH-02 · GH-03 · GH-04 (1.0.4) · SEC-01/02 (checkout ใหม่) · SEC-03 · SEC-04/05 · ARC-01 · ARC-02/03 · API-01 · API-02..07 · DD-01..05 · UI-01 · EXC-01 · QA-01..06 | ✅ |
 
 ```
 $ pnpm --filter backend test          Tests: 47 passed, 47 total
 $ pnpm --filter backend test:e2e      Tests: 20 passed, 20 total   (PostgreSQL จริง + Core Hub ปลอม)
-$ pnpm -r typecheck · lint · build    ผ่าน (frontend: next typegen && tsc --noEmit · Next.js 15.5 · Tailwind v4)
+$ pnpm -r typecheck · lint · build    ผ่าน
 ```
 
-```
-$ ./standards/scripts/run-all-checks.sh .        (branch feature/lost-and-found/standards-v1-0-2)
-❌ 2 / 18 checks failed — merge would be blocked.
-```
+- v1.0.4 แก้ปัญหา `jq.exe` ของ Windows ได้จริง: รันด้วย `jq.exe` ตรง ๆ แล้ว ARC-02 / QA-06 ผ่าน ไม่ต้องครอบ `tr -d '\r'` แล้ว
 
-| กฎ | ผล | สาเหตุ |
-|---|---|---|
-| GH-01 · GH-03 · GH-04 (1.0.2) · SEC-03 · SEC-04/05 · ARC-01 · ARC-02/03 · API-01 · API-02..07 · DD-01/02 · DD-03 · DD-04 · DD-05 · UI-01 · EXC-01 · QA-01..06 | ✅ | |
-| GH-02 | ❌ | ตอนรันในเครื่อง สคริปต์ตรวจ commit ล่าสุด (`02`) — ยังไม่ได้ commit งานรอบนี้ · commit ใหม่ต้องเป็น `feat(lost-and-found): …` (บน CI ตรวจเฉพาะ commit ใน PR) |
-| SEC-01 | ❌ | เจอเฉพาะ `backend/.env` ในเครื่อง (git ignore แล้ว ไม่ขึ้น CI) |
+## เปิดดูหน้าจอจริง (Chrome · 29 ก.ย.)
 
-**เทียบกับรอบที่ตรวจด้วย 1.2.0: ไม่มีข้อไหนที่เคยผ่านแล้วตก**
+login ที่ Core Hub ด้วยบัญชีทดสอบ `staff@core.local` แล้วไล่ดูทีละหน้า
 
-สิ่งที่จัดการเพื่อให้ผ่าน:
-- ย้าย `csmju2030-standards/` (สำเนาเก่า) และ `csmju-core-hub/` ออกไปไว้ข้าง repo — เคยทำให้ DD-03 และ QA-06 ตก
-- ย้าย `backend/.git` ที่ว่างเปล่า (`git init` ไว้โดยไม่มี commit) ออก เพื่อให้ `backend/` อยู่ใน repo หลักจริง
-- ทำงานบน branch `feature/lost-and-found/standards-v1-0-2` (GH-01)
+| หน้า / ส่วน | ผล |
+|---|---|
+| เปิด `/` ยังไม่ login | พาไปหน้า login ของ Core Hub เอง → login แล้วกลับมาหน้าเดิม |
+| หน้าแรก · ค้นหา · แจ้งของ · รับของคืน · รายการของฉัน · แอดมิน | แสดงปกติหลังย้ายเป็น Tailwind v4 · โหลดข้อมูลจาก API ได้ · ไม่มี error ใน console |
+| แผนที่ดูตำแหน่ง (หน้ารายละเอียด) | tile ของ OSM โหลดครบ · มีหมุด (รูปจากแพ็กเกจ leaflet ไม่ใช้ CDN) · มีเครดิต "© OpenStreetMap contributors" |
+| แผนที่ปักหมุด (หน้าแจ้งของ) | คลิกแล้วหมุดขึ้น · ฟอร์มบันทึกพิกัด |
+| แผนที่จุดเสี่ยง (แอดมิน > สถิติ) | วงความหนาแน่นขึ้นตรงตำแหน่ง · มีเครดิต OSM |
+| เมนูผู้ใช้ | แสดงอีเมลจริงและสิทธิ์ "เจ้าหน้าที่ (ตามบทบาทในบัญชี Core Hub)" · ไม่มีตัวสลับสิทธิ์หรือช่องรหัสผ่าน |
+| ออกจากระบบ | พากลับเว็บ Core Hub · เรียก API ต่อได้ 401 (คุกกี้ถูกลบ) |
 
-> Windows: `jq.exe` คืนบรรทัดแบบ CRLF ทำให้ ARC-02 ตกหลอกทุก dependency (แม้แต่ `@nestjs/common`)
-> ต้องกรอง `\r` ออกก่อน (ครอบ jq ด้วย `tr -d '\r'`) จึงได้ผลจริงข้างบน — อาจแจ้งทีม standards ให้สคริปต์รองรับ
+เจอและแก้ระหว่างตรวจ: ตอนยังไม่ login หน้าเว็บโชว์แถบแดง "กรุณาเข้าสู่ระบบอีกครั้ง" แวบหนึ่งก่อนถูกพาไป login → ตอนนี้แสดงเป็นกำลังโหลดแทน
 
-## สิ่งที่แก้ในรอบนี้
+## ตรวจว่าไม่มีข้อมูลที่ห้ามติดไป
 
-### บั๊ก: 401 `missing_token` ไม่หยุด (log ที่แนบมา)
+- `csmju-core-hub/` ย้ายไปอยู่นอก repo แล้ว (`Desktop/csmju-core-hub`) · ใน PR 2 มี 151 ไฟล์ ไม่มี `.env` `.env.local` `*.pem` `*.key` `csmju-core-hub` `node_modules` `dist` `.next` `uploads/` หรือฐานข้อมูลเก่า
+- `.gitignore` ใช้ของ scaffold (`.env` · `*.pem` · `*.key` ฯลฯ) รวมกับของระบบนี้
 
-- **สาเหตุ:** ระบบทำ SSO ตามสัญญา 1.1 แต่ Core Hub `main` ยังเป็น 1.0
-  ตอน Core Hub ส่งกลับมาที่ `/auth/callback` ระบบ (ตามกฎ 1.1) ทิ้ง token แล้วส่งไป `/auth/login`
-  ซึ่งพาไป `/sso/authorize` ของเว็บ Core Hub ที่ `main` ไม่มี → ไม่เคยได้คุกกี้ session → ทุก API ได้ 401
-- **แก้:** ย้ายชั้น auth/common ของ backend ไปใช้ reference implementation สัญญา 1.0 (`demo-student-subsystem` branch `main`) ทั้งชุด ไม่แก้ตรรกะ
-  - callback รับ token ทั้งแบบมีและไม่มี `state` แล้วตั้งคุกกี้ `core_hub_access_token`
-  - `/auth/login` `/auth/callback` `/auth/logout` ฝั่งเบราว์เซอร์เป็น route ของ frontend
-    - `/auth/login` พาไปเริ่ม SSO ที่เว็บ Core Hub `/api/sso/lost-and-found`
-    - `/auth/callback` ส่งต่อให้ backend ตรวจ แล้วพากลับหน้าที่ตั้งใจจะเข้า
-- **ทดสอบ flow จริงแบบเบราว์เซอร์ (cookie jar):** login ที่เว็บ Core Hub → `/auth/login?next=/my-items` → Core Hub → callback 302 กลับ `/my-items` → `/api/v1/members/me` 200 → logout → 401
-- เอา rate limit ของ 1.1 ออกด้วย เพราะ error code `TOO_MANY_REQUESTS` ไม่อยู่ใน 7 ค่าของสัญญา 1.0 (ถ้าคงไว้ API-04 จะตก)
+## สิ่งที่เปลี่ยนเพื่อให้ตรงกับ repo จริง
 
-### ผูกมาตรฐาน v1.0.2 (ครบ 4 ที่ตามที่ PM สั่ง)
+- ชื่อระบบเป็น **`csmju-lost-and-found`** ตาม scaffold (เดิมผมตั้งเป็น `lost-and-found`)
+  - เปลี่ยนใน `SUBSYSTEM_ID` · `/api/health` · `subsystem.yaml` · ทะเบียน Core Hub (entry เดิม เปลี่ยนชื่อ + `standardsVersion: "1.0.4"` + `repo` ยังเป็น APPROVED / ACTIVE)
+- `subsystem.yaml` คง `owners` · `display_name` · `repo` · `status: proposed` ของ scaffold ไว้
+- `package.json` ที่ราก ใช้ `pnpm@12.3.4` ตาม tech-stack 1.1 (scaffold เป็น `pnpm@9.15.9`)
+- `.env.example` ที่ราก ชี้ไป `backend/.env.example` และ `frontend/.env.example` (ของ scaffold เป็นค่าตัวอย่าง `CHANGE-ME`)
 
-- `ci.yml` → `@v1.0.2`
-- submodule `standards/` → tag `v1.0.2`
-- `.standards-version` → `1.0.2`
-- `subsystem.yaml` → `standards_version: "1.0.2"` (`public_endpoints` เหลือ `GET /api/health` · `GET /auth/callback` ตามสัญญา 1.0)
-- ทะเบียนใน Core Hub อัปเดตเป็น `standardsVersion: "1.0.2"` แล้ว
-- เอา `conformance-nightly.yml` ออก เพราะ v1.0.2 ไม่มี template นี้ (มาใน 1.1)
-- **PR นี้แก้ `.github/workflows` และ `standards` จะตก GH-03 เป็นปกติ → ต้องส่งให้ PM merge**
+## สิ่งที่แก้ในรอบก่อน (ยังอยู่ใน PR 2)
 
-### dependency ตามที่ PM อนุมัติ
-
-- `lucide-react` · `leaflet` · `qrcode.react` อยู่ใน `dependencies` · `@types/leaflet` อยู่ใน devDependencies
-- เอา `react-leaflet` ออก แผนที่ 3 ตัว (ปักหมุดตอนแจ้ง · ดูตำแหน่ง · แผนที่ความหนาแน่นของเจ้าหน้าที่) เขียนใหม่ด้วย `leaflet` ตรง ๆ ตาม tech-stack ข้อ 1.4.2
-- tile เปลี่ยนเป็น OpenStreetMap และแสดงเครดิต OSM
-  - เดิมใช้ tile ของ Google Maps (ภาพดาวเทียม) โดยไม่มี API key ซึ่งขัดเงื่อนไขของ Google
-  - ผลคือแผนที่เป็นแผนที่ถนน ไม่ใช่ภาพดาวเทียมแล้ว
-- รูปหมุดใช้ไฟล์จากแพ็กเกจ `leaflet` เอง ไม่โหลดจาก CDN แล้ว (ถ้าตั้ง CSP ต้องเพิ่มแค่ `tile.openstreetmap.org` ใน `img-src`)
-- QR บนโปสเตอร์ใส่แค่ลิงก์หน้ารายการ (ข้อมูลสาธารณะ) ไม่มี token หรือข้อมูลบุคคล
-
-### Tailwind v4
-
-- ย้าย token จาก `tailwind.config.ts` ไป `@theme` ใน `frontend/src/app/globals.css` (ลบ `tailwind.config.ts` และ `autoprefixer` · ใช้ `@tailwindcss/postcss`)
-- ชื่อ class ที่ v4 เปลี่ยนความหมาย (`shadow-sm` → `shadow-xs`, `ring` ฯลฯ) แก้ด้วยเครื่องมือทางการ `@tailwindcss/upgrade`
-- แก้ตัวแปรฟอนต์ที่เครื่องมือสร้างให้อ้างตัวเอง (`--font-display`)
-- **ยังไม่ได้เปิดดูหน้าจอจริงหลังย้ายเป็น v4** — build ผ่าน แต่ควรเปิดดูว่าหน้าตาเหมือนเดิม
-
-## ชั้น auth ที่คัดลอกมา
-
-- จาก `demo-student-subsystem` branch `main` (สัญญา 1.0): `src/auth/` ทั้งหมด (ยกเว้น `permissions.ts`), `src/common/` ทั้งหมด, `src/config/` (`configuration.ts` เพิ่มค่าของระบบนี้ เช่น port 4000, `uploadDir`), `src/health/`, `src/main.ts` (เรียก `configureApp` เพิ่ม), `test/helpers/fake-core-hub.ts` · `token-factory.ts`
-- แก้ไข: ไม่ได้แก้ตรรกะใน `auth/` และ `common/` · `permissions.ts` และ spec ของ permission เขียนเองตามโดเมน (AGENTS ข้อ 2 อนุญาต)
+- **บั๊ก 401 `missing_token`:** ชั้น auth ใช้ reference สัญญา 1.0 (`demo-student-subsystem` main) ไม่แก้ตรรกะ · `/auth/login` `/auth/callback` `/auth/logout` ฝั่งเบราว์เซอร์เป็น route ของ frontend
+- **dependency:** ถอด `react-leaflet` ออก ใช้ `leaflet` ตรง ๆ · `lucide-react` · `leaflet` · `qrcode.react` อยู่ใน dependencies · QR มีแค่ลิงก์หน้ารายการ
+- **แผนที่:** tile OpenStreetMap พร้อมเครดิต · เดิมใช้ Google Maps โดยไม่มี API key (ภาพดาวเทียม) — **รอ PM ตัดสินเรื่องภาพดาวเทียม (ข้อ 2 ของ PM ยังว่าง)**
+- **Tailwind v4:** token อยู่ใน `@theme` ของ `globals.css`
 
 ## Role mapping (ตรงกับ default_role_mapping ในทะเบียน)
 
@@ -94,20 +86,7 @@ $ ./standards/scripts/run-all-checks.sh .        (branch feature/lost-and-found/
 | staff | STAFF | เจ้าหน้าที่ |
 | admin | ADMIN | เจ้าหน้าที่ |
 
-## ข้อสมมติที่ตั้งเอง
-
-1. frontend (:3002) เป็น `base_url` และ `callback_url` · `/auth/login` `/auth/callback` `/auth/logout` เป็น route ของ Next.js
-   - backend ยังเป็นผู้ตรวจ token และตั้งคุกกี้เองตาม reference
-   - frontend แค่ส่งต่อคำขอ แล้ว redirect กลับหน้าที่ผู้ใช้ตั้งใจจะเข้า (callback ของ reference ตอบเป็น JSON ซึ่งเบราว์เซอร์ใช้ต่อไม่ได้)
-2. `state` จาก Core Hub ระบบนี้ตรวจไม่ได้ (Core Hub สุ่มเอง) จึงส่งกลับใน body ของ backend ตามข้อ 5.1 "ควรส่งกลับให้ client ตรวจได้"
-3. logout ลบแค่คุกกี้ของระบบนี้แล้วกลับเว็บ Core Hub (สัญญา 1.0 ยังไม่มี logout ทั้งระบบ)
-
 ## ข้อจำกัดที่ต้องรู้ (สัญญา 1.0)
 
-- บน `localhost` ระบบย่อยทุกตัวที่ใช้สัญญา 1.0 ตั้งคุกกี้ชื่อ `core_hub_access_token` เหมือนกัน ถ้าเปิดหลายระบบย่อยพร้อมกันในเครื่อง คุกกี้ทับกันได้ (แก้ใน 1.1)
-- ยังไม่มี silent re-SSO: token หมดอายุ 15 นาทีแล้วหน้าเว็บจะพาไป `/auth/login` อีกรอบ (ถ้า Core Hub ยัง login อยู่จะกลับมาเองโดยไม่ต้องกรอกรหัส)
-
-## สิ่งที่ยังไม่ได้ทดสอบ
-
-- ยังไม่ได้คลิกผ่านหน้าเว็บในเบราว์เซอร์จริง: ทดสอบ SSO ด้วย cookie jar + conformance, ทดสอบทุก flow ผ่าน API (e2e), และ build ทุกหน้าผ่าน
-- หน้าตาหลังย้ายเป็น Tailwind v4 และแผนที่ที่เขียนใหม่ ต้องเปิดดูด้วยตา
+- บน `localhost` ระบบย่อยทุกตัวใช้คุกกี้ชื่อ `core_hub_access_token` เหมือนกัน เปิดหลายระบบย่อยพร้อมกันในเครื่องแล้วคุกกี้ทับกันได้ (แก้ใน 1.1)
+- ออกจากระบบลบแค่คุกกี้ของระบบนี้ Core Hub ยัง login อยู่ เปิดระบบนี้อีกครั้งจะเข้าได้ทันที (1.0 ยังไม่มี logout ทั้งระบบ)

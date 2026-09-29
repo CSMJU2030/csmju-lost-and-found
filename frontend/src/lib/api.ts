@@ -52,7 +52,7 @@ export function signOut() {
   form.submit();
 }
 
-function handleUnauthorized(method: string): never {
+function handleUnauthorized(method: string): Promise<never> {
   let recentlyRedirected = false;
   try {
     recentlyRedirected = Date.now() - Number(sessionStorage.getItem(RESSO_AT_KEY) || 0) < RESSO_LOOP_MS;
@@ -62,7 +62,11 @@ function handleUnauthorized(method: string): never {
   const shouldRedirect =
     !recentlyRedirected &&
     (method === 'GET' || window.confirm('เซสชันหมดอายุ ต้องเข้าสู่ระบบใหม่ (ข้อมูลที่กรอกไว้อาจหาย) ไปหน้าเข้าสู่ระบบเลยไหม?'));
-  if (shouldRedirect) signIn();
+  if (shouldRedirect) {
+    signIn();
+    // กำลังออกจากหน้าไป login — รอไว้เฉย ๆ ไม่ให้หน้าแสดงข้อความ error แวบก่อนเปลี่ยนหน้า
+    return new Promise<never>(() => {});
+  }
   throw new ApiError(401, 'กรุณาเข้าสู่ระบบอีกครั้ง', 'UNAUTHORIZED');
 }
 
@@ -79,7 +83,7 @@ async function request<T>(method: string, path: string, body?: unknown): Promise
     throw new ApiError(0, 'เชื่อมต่อเซิร์ฟเวอร์ไม่ได้ กรุณาตรวจสอบว่า backend รันอยู่ (pnpm --filter backend start:dev)');
   }
   const json = (await res.json().catch(() => null)) as Envelope<T> | null;
-  if (res.status === 401) handleUnauthorized(method);
+  if (res.status === 401) return handleUnauthorized(method);
   if (!res.ok || !json?.success) {
     const error = json?.error;
     const details = Array.isArray(error?.details) ? error.details.map(String) : [];
