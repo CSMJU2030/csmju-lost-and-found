@@ -1,0 +1,10 @@
+node_modules/
+# ไฟล์ SQLite เดิม (ข้อมูลย้ายเข้า PostgreSQL แล้ว)
+data/
+uploads/
+.env
+# Prisma Client — สร้างใหม่ด้วย prisma generate ตอน npm install
+generated/
+# ผลลัพธ์ของ nest build / jest
+dist/
+coverage/

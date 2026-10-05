@@ -1,0 +1,1211 @@
+{
+  "openapi": "3.0.0",
+  "paths": {
+    "/api/v1/me": {
+      "get": {
+        "operationId": "MeController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Me"
+        ]
+      }
+    },
+    "/auth/callback": {
+      "get": {
+        "operationId": "SsoCallbackController_callback",
+        "parameters": [
+          {
+            "name": "access_token",
+            "required": true,
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "token_type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "Bearer",
+                "bearer"
+              ]
+            }
+          },
+          {
+            "name": "expires_in",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 32,
+              "type": "string"
+            }
+          },
+          {
+            "name": "state",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 512,
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "SsoCallback"
+        ]
+      }
+    },
+    "/api/health": {
+      "get": {
+        "operationId": "HealthController_check",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "tags": [
+          "Health"
+        ]
+      }
+    },
+    "/api/v1/members": {
+      "get": {
+        "operationId": "MembersController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "ผู้ใช้ทั้งหมด (เจ้าหน้าที่)",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/api/v1/members/me": {
+      "get": {
+        "operationId": "MembersController_me",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/MemberView"
+                }
+              }
+            }
+          }
+        },
+        "summary": "แถวใน members ของผู้เรียกเอง (id ที่ใช้เทียบกับ reporterId / claimantId)",
+        "tags": [
+          "Members"
+        ]
+      }
+    },
+    "/api/v1/items": {
+      "get": {
+        "operationId": "ItemsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "q",
+            "required": false,
+            "in": "query",
+            "description": "ค้นหาในชื่อ รหัส สถานที่ และรายละเอียด",
+            "schema": {
+              "maxLength": 100,
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "searching",
+                "found",
+                "returned"
+              ]
+            }
+          },
+          {
+            "name": "type",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "lost",
+                "found"
+              ]
+            }
+          },
+          {
+            "name": "category",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "maxLength": 50,
+              "type": "string"
+            }
+          },
+          {
+            "name": "mine",
+            "required": false,
+            "in": "query",
+            "description": "true = เฉพาะรายการที่ฉันแจ้ง",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "true",
+                "false"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "ค้นหา/กรองรายการ · `?mine=true` = เฉพาะที่ฉันแจ้ง",
+        "tags": [
+          "Items"
+        ]
+      },
+      "post": {
+        "operationId": "ItemsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/items/{id}": {
+      "get": {
+        "operationId": "ItemsController_get",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemView"
+                }
+              }
+            }
+          }
+        },
+        "summary": "รายละเอียด (`secretAnswer` เห็นเฉพาะเจ้าของโพสต์/เจ้าหน้าที่)",
+        "tags": [
+          "Items"
+        ]
+      },
+      "patch": {
+        "operationId": "ItemsController_update",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/UpdateItemDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      },
+      "delete": {
+        "operationId": "ItemsController_remove",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DeletedView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/items/{id}/matches": {
+      "get": {
+        "operationId": "ItemsController_matches",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "รายการฝั่งตรงข้ามที่อาจเป็นชิ้นเดียวกัน (เรียงตามคะแนน)",
+        "tags": [
+          "Items"
+        ]
+      }
+    },
+    "/api/v1/claims": {
+      "get": {
+        "operationId": "ClaimsController_list",
+        "parameters": [
+          {
+            "name": "page",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "default": 1,
+              "type": "number"
+            }
+          },
+          {
+            "name": "limit",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "minimum": 1,
+              "maximum": 100,
+              "default": 20,
+              "type": "number"
+            }
+          },
+          {
+            "name": "scope",
+            "required": false,
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "enum": [
+                "mine",
+                "all"
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "เจ้าหน้าที่: ทั้งหมด · ผู้ใช้ทั่วไป (หรือ `?scope=mine`): คำขอที่ฉันยื่น + คำขอกับรายการของฉัน",
+        "tags": [
+          "Claims"
+        ]
+      },
+      "post": {
+        "operationId": "ClaimsController_create",
+        "parameters": [],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateClaimDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/claims/{id}/approve": {
+      "post": {
+        "operationId": "ClaimsController_approve",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimView"
+                }
+              }
+            }
+          }
+        },
+        "summary": "อนุมัติ และออกรหัส 6 หลักให้ผู้ยื่น",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/claims/{id}/reject": {
+      "post": {
+        "operationId": "ClaimsController_reject",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/claims/{id}/confirm": {
+      "post": {
+        "operationId": "ClaimsController_confirm",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimView"
+                }
+              }
+            }
+          }
+        },
+        "summary": "ผู้ส่ง/ผู้รับยืนยันการส่งมอบฝั่งตัวเอง ครบสองฝ่ายแล้วปิดคำขออัตโนมัติ",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/claims/{id}/verify": {
+      "post": {
+        "operationId": "ClaimsController_verify",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/VerifyCodeDto"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ClaimView"
+                }
+              }
+            }
+          }
+        },
+        "summary": "เจ้าหน้าที่ยืนยันรหัส 6 หลัก (กรณีส่งผ่านห้องเจ้าหน้าที่)",
+        "tags": [
+          "Claims"
+        ]
+      }
+    },
+    "/api/v1/stats": {
+      "get": {
+        "operationId": "StatsController_get",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ItemStatsView"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Stats"
+        ]
+      }
+    }
+  },
+  "info": {
+    "title": "Lost & Found API",
+    "description": "ระบบย่อย csmju-lost-and-found ของ CSMJU2030 · ทุก response ห่อด้วย { success, data, meta? } หรือ { success: false, error: { code, message, details? } } · ยืนยันตัวตนด้วย Core Hub access token",
+    "version": "1.0.0",
+    "contact": {}
+  },
+  "tags": [],
+  "servers": [],
+  "components": {
+    "securitySchemes": {
+      "bearer": {
+        "scheme": "bearer",
+        "bearerFormat": "JWT",
+        "type": "http"
+      },
+      "cookie": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "core_hub_access_token"
+      }
+    },
+    "schemas": {
+      "MemberView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "studentId": {
+            "type": "string",
+            "description": "รหัสนักศึกษา (ถ้ามี)"
+          },
+          "fullName": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          },
+          "phone": {
+            "type": "string"
+          },
+          "role": {
+            "type": "string",
+            "description": "สำเนาสิทธิ์ที่แมปจาก core role: admin = เจ้าหน้าที่",
+            "enum": [
+              "admin",
+              "user"
+            ]
+          },
+          "createdAt": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "studentId",
+          "fullName",
+          "email",
+          "phone",
+          "role",
+          "createdAt"
+        ]
+      },
+      "ItemView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "code": {
+            "type": "string",
+            "description": "รหัสที่แสดงให้ผู้ใช้ เช่น LF-2026-00001"
+          },
+          "reportType": {
+            "enum": [
+              "lost",
+              "found"
+            ],
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "location": {
+            "type": "string"
+          },
+          "faculty": {
+            "type": "string"
+          },
+          "building": {
+            "type": "string"
+          },
+          "room": {
+            "type": "string"
+          },
+          "dateLost": {
+            "type": "string",
+            "description": "วันที่ของหาย/พบของ (YYYY-MM-DD)"
+          },
+          "timeLost": {
+            "type": "string",
+            "description": "เวลาโดยประมาณ (HH:MM เวลาไทย)"
+          },
+          "status": {
+            "enum": [
+              "found",
+              "searching",
+              "returned"
+            ],
+            "type": "string"
+          },
+          "urgency": {
+            "enum": [
+              "normal",
+              "high"
+            ],
+            "type": "string"
+          },
+          "imageUrl": {
+            "type": "string",
+            "description": "รูปหลัก (path /uploads/...) หรือค่าว่าง"
+          },
+          "thumbnails": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "pinX": {
+            "type": "number"
+          },
+          "pinY": {
+            "type": "number"
+          },
+          "secretQuestion": {
+            "type": "string"
+          },
+          "secretAnswer": {
+            "type": "string",
+            "description": "ส่งให้เฉพาะเจ้าของโพสต์และเจ้าหน้าที่"
+          },
+          "reporterId": {
+            "type": "string",
+            "description": "id ใน members ของผู้แจ้ง"
+          },
+          "reporterName": {
+            "type": "string"
+          },
+          "reporterStudentId": {
+            "type": "string"
+          },
+          "reporterPhone": {
+            "type": "string"
+          },
+          "reporterContact": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string"
+          },
+          "activeClaims": {
+            "type": "number",
+            "description": "จำนวนคำขอที่ยังดำเนินการอยู่"
+          }
+        },
+        "required": [
+          "id",
+          "code",
+          "reportType",
+          "name",
+          "description",
+          "category",
+          "location",
+          "faculty",
+          "building",
+          "room",
+          "dateLost",
+          "timeLost",
+          "status",
+          "urgency",
+          "imageUrl",
+          "thumbnails",
+          "reporterId",
+          "reporterName",
+          "reporterStudentId",
+          "reporterPhone",
+          "reporterContact",
+          "createdAt",
+          "activeClaims"
+        ]
+      },
+      "MatchView": {
+        "type": "object",
+        "properties": {
+          "item": {
+            "$ref": "#/components/schemas/ItemView"
+          },
+          "score": {
+            "type": "number",
+            "description": "0-100"
+          },
+          "reasons": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "required": [
+          "item",
+          "score",
+          "reasons"
+        ]
+      },
+      "CreateItemDto": {
+        "type": "object",
+        "properties": {
+          "reportType": {
+            "type": "string",
+            "enum": [
+              "lost",
+              "found"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "category": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "location": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "faculty": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "building": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "room": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "dateLost": {
+            "type": "string",
+            "description": "YYYY-MM-DD"
+          },
+          "timeLost": {
+            "type": "string",
+            "description": "HH:MM"
+          },
+          "urgency": {
+            "type": "string",
+            "enum": [
+              "normal",
+              "high"
+            ]
+          },
+          "images": {
+            "description": "รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) หรือ path /uploads/... ที่อัปโหลดไว้แล้ว",
+            "maxItems": 6,
+            "type": "array",
+            "items": {
+              "type": "string",
+              "maxLength": 3000000
+            }
+          },
+          "pinX": {
+            "type": "number",
+            "minimum": -90,
+            "maximum": 90
+          },
+          "pinY": {
+            "type": "number",
+            "minimum": -180,
+            "maximum": 180
+          },
+          "secretQuestion": {
+            "type": "string",
+            "maxLength": 150
+          },
+          "secretAnswer": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "reporterName": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "reporterStudentId": {
+            "type": "string",
+            "description": "รหัสนักศึกษา 10 หลัก (ไม่บังคับ)"
+          },
+          "reporterPhone": {
+            "type": "string"
+          },
+          "reporterContact": {
+            "type": "string",
+            "maxLength": 100
+          }
+        },
+        "required": [
+          "reportType",
+          "name",
+          "description",
+          "category",
+          "location",
+          "room",
+          "dateLost",
+          "timeLost",
+          "reporterName",
+          "reporterPhone",
+          "reporterContact"
+        ]
+      },
+      "UpdateItemDto": {
+        "type": "object",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": [
+              "searching",
+              "found",
+              "returned"
+            ]
+          }
+        },
+        "required": [
+          "status"
+        ]
+      },
+      "DeletedView": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "deleted": {
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "deleted"
+        ]
+      },
+      "CreateClaimDto": {
+        "type": "object",
+        "properties": {
+          "itemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "firstName": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "lastName": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "studentId": {
+            "type": "string",
+            "description": "รหัสนักศึกษา 10 หลัก (ไม่บังคับ)"
+          },
+          "department": {
+            "type": "string",
+            "maxLength": 80
+          },
+          "meetDate": {
+            "type": "string",
+            "description": "วันที่นัด YYYY-MM-DD (เวลาไทย)"
+          },
+          "meetTime": {
+            "type": "string",
+            "description": "เวลานัด HH:MM (เวลาไทย)"
+          },
+          "meetLocation": {
+            "type": "string",
+            "maxLength": 100
+          },
+          "contact": {
+            "type": "string",
+            "maxLength": 50
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300
+          },
+          "secretAnswer": {
+            "type": "string",
+            "description": "คำตอบคำถามยืนยันความเป็นเจ้าของ (เมื่อขอรับคืนของที่มีคำถามลับ)",
+            "maxLength": 100
+          },
+          "linkedItemId": {
+            "type": "string",
+            "description": "โพสต์ของผู้ยื่นเองที่เป็นเรื่องเดียวกัน เช่น เจ้าของเคยแจ้งหายไว้ — ปิดพร้อมกันเมื่อคืนสำเร็จ",
+            "format": "uuid"
+          }
+        },
+        "required": [
+          "itemId",
+          "firstName",
+          "lastName",
+          "department",
+          "meetDate",
+          "meetTime",
+          "meetLocation",
+          "contact"
+        ]
+      },
+      "ClaimView": {
+        "type": "object",
+        "properties": {
+          "requestId": {
+            "type": "string",
+            "description": "UUID ใช้เรียก API"
+          },
+          "requestCode": {
+            "type": "string",
+            "description": "รหัสที่แสดงให้ผู้ใช้ เช่น REQ-1A2B3C4D"
+          },
+          "itemId": {
+            "type": "string"
+          },
+          "itemName": {
+            "type": "string"
+          },
+          "itemCode": {
+            "type": "string"
+          },
+          "claimType": {
+            "description": "found = เจ้าของขอรับคืน · lost = ผู้พบแจ้งส่งคืน",
+            "enum": [
+              "lost",
+              "found"
+            ],
+            "type": "string"
+          },
+          "claimantId": {
+            "type": "string"
+          },
+          "claimerName": {
+            "type": "string"
+          },
+          "studentId": {
+            "type": "string"
+          },
+          "department": {
+            "type": "string"
+          },
+          "claimDateTime": {
+            "type": "string",
+            "description": "วันเวลานัด \"YYYY-MM-DD HH:MM\" เวลาไทย"
+          },
+          "claimLocation": {
+            "type": "string"
+          },
+          "contact": {
+            "type": "string"
+          },
+          "note": {
+            "type": "string"
+          },
+          "requestDate": {
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "approved",
+              "at_office",
+              "rejected",
+              "completed"
+            ],
+            "type": "string"
+          },
+          "secretAnswerGiven": {
+            "type": "string",
+            "description": "ส่งให้เฉพาะเจ้าหน้าที่"
+          },
+          "handoverCode": {
+            "type": "string",
+            "description": "ส่งให้เฉพาะผู้ยื่นคำขอและเจ้าหน้าที่"
+          },
+          "pickupCode": {
+            "type": "string",
+            "description": "ส่งให้เฉพาะเจ้าของโพสต์และเจ้าหน้าที่"
+          },
+          "approvedAt": {
+            "type": "string"
+          },
+          "droppedOffAt": {
+            "type": "string"
+          },
+          "handedOverAt": {
+            "type": "string"
+          },
+          "handedOverBy": {
+            "type": "string"
+          },
+          "giverConfirmedAt": {
+            "type": "string"
+          },
+          "receiverConfirmedAt": {
+            "type": "string"
+          },
+          "linkedItemId": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "requestId",
+          "requestCode",
+          "itemId",
+          "itemName",
+          "itemCode",
+          "claimType",
+          "claimantId",
+          "claimerName",
+          "studentId",
+          "department",
+          "claimDateTime",
+          "claimLocation",
+          "contact",
+          "note",
+          "requestDate",
+          "status"
+        ]
+      },
+      "VerifyCodeDto": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^\\d{6}$"
+          }
+        },
+        "required": [
+          "code"
+        ]
+      },
+      "ItemStatsView": {
+        "type": "object",
+        "properties": {
+          "totalItems": {
+            "type": "number"
+          },
+          "searching": {
+            "type": "number"
+          },
+          "found": {
+            "type": "number"
+          },
+          "returned": {
+            "type": "number"
+          },
+          "pendingClaims": {
+            "type": "number"
+          },
+          "totalUsers": {
+            "type": "number"
+          }
+        },
+        "required": [
+          "totalItems",
+          "searching",
+          "found",
+          "returned",
+          "pendingClaims",
+          "totalUsers"
+        ]
+      }
+    }
+  }
+}
