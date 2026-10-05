@@ -11,11 +11,11 @@ pnpm install                        # จากรากของ repo (สร�
 cp backend/.env.example backend/.env
 docker compose -f backend/docker-compose.yml up -d
 pnpm --filter backend prisma:deploy # สร้างฐานข้อมูล lost_and_found_db และตารางตาม migration
-pnpm --filter backend start:dev     # http://localhost:4000 (รีโหลดอัตโนมัติเมื่อแก้โค้ด)
+pnpm --filter backend start:dev     # http://localhost:4220 (รีโหลดอัตโนมัติเมื่อแก้โค้ด)
 ```
 
 ต้องมี Core Hub รันอยู่ (`CORE_HUB_URL`) เพื่อดึง JWKS — ไม่มีโหมดข้ามการตรวจ token แม้ตอนพัฒนา (auth-contract ข้อ 9)
-เบราว์เซอร์ใช้งานผ่าน frontend (:3002) ซึ่งส่งต่อ `/api` `/auth` `/uploads` มาที่นี่
+เบราว์เซอร์ใช้งานผ่าน frontend (:3220) ซึ่งส่งต่อ `/api` `/auth` `/uploads` มาที่นี่
 
 ## การยืนยันตัวตนและสิทธิ์
 

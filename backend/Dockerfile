@@ -42,7 +42,7 @@ RUN chmod +x ./backend/docker/entrypoint.sh && chown -R node:node /app
 USER node
 WORKDIR /app/backend
 
-EXPOSE 4000
+EXPOSE 4220
 
 ENTRYPOINT ["./docker/entrypoint.sh"]
 CMD ["node", "dist/src/main.js"]

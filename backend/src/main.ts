@@ -20,7 +20,7 @@ async function bootstrap(): Promise<void> {
 
   app.enableShutdownHooks();
 
-  const port = config.get<number>('port', 4000);
+  const port = config.get<number>('port', 4220);
   await app.listen(port);
 
   const logger = new Logger('Bootstrap');

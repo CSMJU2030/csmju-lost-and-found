@@ -1,7 +1,7 @@
 // ค่าที่ route handler ของ SSO ใช้ (ฝั่ง server เท่านั้น) — auth-contract 1.0 ข้อ 5 (standards v1.0.2)
 
 /** backend (NestJS) ของระบบนี้ */
-export const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:4000').replace(/\/$/, '');
+export const BACKEND_URL = (process.env.BACKEND_URL || 'http://localhost:4220').replace(/\/$/, '');
 /** เว็บของ Core Hub — เริ่ม SSO ที่ {CORE_HUB_WEB_URL}/api/sso/<ชื่อระบบ> (login ให้ก่อนถ้ายังไม่ได้ login) */
 export const CORE_HUB_WEB_URL = (process.env.CORE_HUB_WEB_URL || 'http://localhost:3100').replace(/\/$/, '');
 /** ชื่อระบบในทะเบียน Core Hub */
