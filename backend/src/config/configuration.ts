@@ -35,7 +35,7 @@ export default (): AppConfig => {
 
   return {
     nodeEnv: process.env.NODE_ENV ?? 'development',
-    port: num(process.env.PORT, 4000),
+    port: num(process.env.PORT, 4220),
     subsystemId: process.env.SUBSYSTEM_ID ?? 'csmju-lost-and-found',
     subsystemName: process.env.SUBSYSTEM_NAME ?? 'Lost & Found',
     uploadDir: resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads'),

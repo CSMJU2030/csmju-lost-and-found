@@ -42,8 +42,8 @@ LostAndFound/                 pnpm workspace (backend + frontend)
 |---|---|
 | Core Hub API | http://localhost:3000 |
 | Core Hub web (หน้า login) | http://localhost:3100 |
-| Lost & Found backend | http://localhost:4000 |
-| **Lost & Found (เปิดที่นี่)** | **http://localhost:3002** — ส่งต่อ `/api` `/uploads` `/auth/callback` ไปที่ backend |
+| Lost & Found backend | http://localhost:4220 |
+| **Lost & Found (เปิดที่นี่)** | **http://localhost:3220** — ส่งต่อ `/api` `/uploads` `/auth/callback` ไปที่ backend |
 
 1. **Core Hub** — ทำตาม [LOCAL_INTEGRATION_GUIDE.md](standards/docs/LOCAL_INTEGRATION_GUIDE.md) ข้อ 4
    แล้วลงทะเบียนระบบนี้ครั้งเดียวตาม [backend/AUTH_INTEGRATION.md](backend/AUTH_INTEGRATION.md)
@@ -55,11 +55,11 @@ pnpm install                                   # ทั้ง backend และ 
 cp backend/.env.example backend/.env
 docker compose -f backend/docker-compose.yml up -d   # เปิด PostgreSQL
 pnpm --filter backend prisma:deploy            # สร้างตารางตาม migration
-pnpm --filter backend start:dev                # backend :4000
-pnpm --filter frontend dev                     # หน้าเว็บ :3002 (อีก terminal)
+pnpm --filter backend start:dev                # backend :4220
+pnpm --filter frontend dev                     # หน้าเว็บ :3220 (อีก terminal)
 ```
 
-เปิด http://localhost:3002 → ระบบพาไป login ที่ Core Hub (บัญชีทดสอบ เช่น `staff@core.local` / `password3`) แล้วกลับมาเอง
+เปิด http://localhost:3220 → ระบบพาไป login ที่ Core Hub (บัญชีทดสอบ เช่น `staff@core.local` / `password3`) แล้วกลับมาเอง
 
 ## ตรวจตามมาตรฐาน
 

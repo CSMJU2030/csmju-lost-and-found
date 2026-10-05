@@ -7,10 +7,10 @@ Lost & Found ไม่มีหน้า login และไม่เก็บร
 ## ลำดับการเข้าระบบ (SSO 1.0)
 
 ```text
-เบราว์เซอร์ → http://localhost:3002/<หน้าไหนก็ได้>
+เบราว์เซอร์ → http://localhost:3220/<หน้าไหนก็ได้>
   API ตอบ 401 → หน้าเว็บพาไป /auth/login?next=<หน้านั้น>        (route ของ frontend)
   → 302 เว็บ Core Hub /api/sso/csmju-lost-and-found                   (login ที่ Core Hub ก่อนถ้ายังไม่ได้ login)
-  → 302 http://localhost:3002/auth/callback?access_token=…&state=…
+  → 302 http://localhost:3220/auth/callback?access_token=…&state=…
   → frontend ส่งต่อให้ backend ตรวจ token (RS256 · JWKS · kid · iss · aud · exp · sub) + แมป role
   → ตั้งคุกกี้ core_hub_access_token (HttpOnly · SameSite=Lax · อายุเท่า token) → กลับไปหน้าเดิม
 ```
@@ -35,7 +35,7 @@ Lost & Found ไม่มีหน้า login และไม่เก็บร
 
 | ตัวแปร | ค่าเริ่มต้น |
 |---|---|
-| `BACKEND_URL` | `http://localhost:4000` |
+| `BACKEND_URL` | `http://localhost:4220` |
 | `CORE_HUB_WEB_URL` | `http://localhost:3100` |
 | `SUBSYSTEM_ID` | `csmju-lost-and-found` |
 
@@ -51,7 +51,7 @@ TOKEN=$(curl -s -X POST http://localhost:3000/api/v1/auth/login -H 'Content-Type
 
 curl -s -X POST http://localhost:3000/api/v1/subsystems -H "Authorization: Bearer $TOKEN" -H 'Content-Type: application/json' \
   -d '{"name":"csmju-lost-and-found","displayName":"Lost & Found","owner":"admin","repo":"CSMJU2030/csmju-lost-and-found",
-       "standardsVersion":"1.0.4","callbackUrl":"http://localhost:3002/auth/callback",
+       "standardsVersion":"1.0.4","callbackUrl":"http://localhost:3220/auth/callback",
        "defaultRoleMapping":{"student":"STUDENT","alumni":"ALUMNI","staff":"STAFF","admin":"ADMIN"},
        "requestedExceptions":[]}'
 # นำ "id" ที่ได้มาใส่แทน <ID>
@@ -60,7 +60,7 @@ curl -s -X POST http://localhost:3000/api/v1/subsystems/<ID>/activate -H "Author
 ```
 
 - เคยลงทะเบียนไว้แล้ว: `PATCH /api/v1/subsystems/<ID>` ส่ง `{"standardsVersion":"1.0.4"}`
-- `callbackUrl` คือที่อยู่ของ **frontend** (`:3002`) ซึ่งส่งต่อ `/auth/callback` ให้ backend
+- `callbackUrl` คือที่อยู่ของ **frontend** (`:3220`) ซึ่งส่งต่อ `/auth/callback` ให้ backend
 - `defaultRoleMapping` ต้องตรงกับ [src/auth/role-mapping.ts](src/auth/role-mapping.ts) และ `subsystem.yaml`
 
 ## ทดสอบว่าเชื่อมได้
@@ -69,8 +69,8 @@ curl -s -X POST http://localhost:3000/api/v1/subsystems/<ID>/activate -H "Author
 STAFF=$(curl -s -X POST http://localhost:3000/api/v1/auth/login -H 'Content-Type: application/json' \
   -d '{"email":"staff@core.local","password":"password3"}' \
   | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).data.access_token))")
-curl -s http://localhost:3002/api/v1/me -H "Authorization: Bearer $STAFF"    # "subsystemRole":"STAFF"
-curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3002/api/v1/me     # 401
+curl -s http://localhost:3220/api/v1/me -H "Authorization: Bearer $STAFF"    # "subsystemRole":"STAFF"
+curl -s -o /dev/null -w '%{http_code}\n' http://localhost:3220/api/v1/me     # 401
 node standards/conformance/run.js                                             # ต้องได้ CONFORMANT L3
 ```
 
