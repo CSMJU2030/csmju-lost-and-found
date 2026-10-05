@@ -44,14 +44,14 @@ export default function RootLayout({
       </head>
       <body className="font-sans bg-surface text-ink antialiased">
         <RoleProvider>
-          <div className="flex h-screen overflow-hidden">
+          <div className="flex h-screen supports-[height:100dvh]:h-dvh overflow-hidden">
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
             <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-[272px]' : 'lg:ml-0'}`}>
               <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
 
               <main className="flex-1 overflow-y-auto">
-                <div className="max-w-[1240px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-6 lg:py-8">
+                <div className="max-w-[1240px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
                   {children}
                 </div>
               </main>

@@ -38,9 +38,20 @@ export default function AdminStats({ items }: { items: LostItem[] }) {
     [items, typeFilter]
   );
 
-  const points = filtered
-    .filter((i) => i.pinX != null && i.pinY != null)
-    .map((i) => ({ id: i.id, lat: i.pinX as number, lng: i.pinY as number, label: `${i.name} (${i.dateLost} ${i.timeLost || ''})` }));
+  // จุดบนแผนที่ + ข้อมูลสำหรับ popup (รูป ชื่อ สถานะ) — memo ไว้ ไม่ให้แผนที่ถูกสร้างใหม่ทุกครั้งที่ render
+  const points = useMemo(
+    () =>
+      filtered
+        .filter((i) => i.pinX != null && i.pinY != null)
+        .map((i) => ({
+          id: i.id,
+          lat: i.pinX as number,
+          lng: i.pinY as number,
+          label: `${i.name} (${i.dateLost} ${i.timeLost || ''})`,
+          item: { id: i.id, name: i.name, imageUrl: i.imageUrl, status: i.status, reportType: i.reportType },
+        })),
+    [filtered]
+  );
 
   const hourly = useMemo(() => {
     const counts = Array(24).fill(0) as number[];

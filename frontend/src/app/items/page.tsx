@@ -98,13 +98,13 @@ export default function ItemsPage() {
         <ApiError message={error} onRetry={reload} />
 
         {/* Filter Controls & Search Bar */}
-        <div className="bg-white rounded-3xl p-6 shadow-xs border border-line space-y-4">
+        <div className="bg-white rounded-3xl p-4 md:p-6 shadow-xs border border-line space-y-4">
 
           {/* Top Row: Status Tabs & View Toggle */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-line pb-4">
 
             {/* Status Tabs */}
-            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
+            <div className="flex flex-wrap md:flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-none">
               {[
                 { id: 'all', label: 'ทั้งหมด', count: items.filter(i => i.status !== 'returned').length },
                 { id: 'searching', label: 'กำลังค้นหา', count: items.filter(i => i.status === 'searching').length },
@@ -113,7 +113,7 @@ export default function ItemsPage() {
                 <button
                   key={tab.id}
                   onClick={() => setSelectedStatus(tab.id as any)}
-                  className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 md:gap-2 px-3 md:px-4 py-2 rounded-xl text-xs sm:text-sm font-medium transition-all whitespace-nowrap ${
                     selectedStatus === tab.id
                       ? 'bg-primary-container text-white shadow-xs'
                       : 'bg-surface text-on-surface-variant hover:bg-surface-container hover:text-on-surface'

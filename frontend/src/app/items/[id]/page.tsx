@@ -8,7 +8,7 @@ import { ArrowLeft, Calendar, MapPin, Package, Tag, Image as ImageIcon, Sparkles
 import Badge from '@/components/ui/Badge'
 import { LostItem } from '@/types'
 import PosterGenerator from '@/components/items/PosterGenerator'
-import MatchList from '@/components/items/MatchList'
+import SuggestedMatches from '@/components/items/SuggestedMatches'
 import { getReportType } from '@/lib/storage'
 import { MatchResult } from '@/lib/matching'
 import { api, ApiError, errorMessage } from '@/lib/api'
@@ -79,10 +79,10 @@ export default function ItemDetailPage() {
           <ArrowLeft className="w-4 h-4" /> กลับไปหน้ารายการ
         </Link>
         <article className="mt-5 overflow-hidden rounded-3xl border border-line bg-white shadow-card">
-          <div className="grid md:grid-cols-2">
+          <div className="grid grid-cols-1 md:grid-cols-2">
 
             {/* ฝั่งซ้าย: รูปภาพ และ แผนที่ */}
-            <div className="flex flex-col border-r border-line">
+            <div className="flex flex-col min-w-0 border-b md:border-b-0 md:border-r border-line">
               <div className="min-h-72 bg-surface-container relative">
                 {activeImage ? (
                   <img src={activeImage} alt={item.name} className="h-full w-full object-cover" />
@@ -112,7 +112,11 @@ export default function ItemDetailPage() {
                 </p>
                 {/* ตรวจสอบว่าของชิ้นนี้มีการปักหมุดพิกัด (pinX, pinY) ไว้หรือไม่ */}
                 {item.pinX != null && item.pinY != null ? (
-                  <ViewMap lat={item.pinX} lng={item.pinY} />
+                  <ViewMap
+                    lat={item.pinX}
+                    lng={item.pinY}
+                    item={{ id: item.id, name: item.name, imageUrl: item.imageUrl, status: item.status, reportType: item.reportType }}
+                  />
                 ) : (
                   <div className="flex h-[300px] w-full items-center justify-center rounded-lg border border-dashed border-outline-variant bg-white text-sm text-outline">
                     ไม่มีการระบุพิกัดบนแผนที่สำหรับรายการนี้
@@ -138,7 +142,7 @@ export default function ItemDetailPage() {
                   <AlertTriangle className="w-3.5 h-3.5" /> สำคัญมาก (เอกสารสำคัญ / ของมีค่าสูง)
                 </p>
               )}
-              <p className="mt-5 text-sm leading-6 text-on-surface-variant">{item.description || 'ไม่มีรายละเอียดเพิ่มเติม'}</p>
+              <p className="mt-5 text-sm leading-6 text-on-surface-variant whitespace-pre-line">{item.description || 'ไม่มีรายละเอียดเพิ่มเติม'}</p>
 
               <dl className="mt-6 space-y-4 border-t border-line pt-5 text-sm">
                 <div className="flex gap-3">
@@ -200,7 +204,7 @@ export default function ItemDetailPage() {
                     <Sparkles className="w-4 h-4 text-amber-500" />
                     {isFound ? 'รายการแจ้งหายที่อาจเป็นของชิ้นนี้' : 'ของที่มีคนแจ้งพบที่อาจตรงกัน'}
                   </p>
-                  <MatchList matches={matches} emptyText="ยังไม่พบรายการที่ตรงกันในระบบ" />
+                  <SuggestedMatches source={item} matches={matches} emptyText="ยังไม่พบรายการที่ตรงกันในระบบ" />
                 </div>
               )}
             </div>
