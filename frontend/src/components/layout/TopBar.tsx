@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu,
   Bell,
@@ -30,6 +30,11 @@ interface TopBarProps {
 
 export default function TopBar({ onMenuClick }: TopBarProps) {
   const router = useRouter();
+  const pathname = usePathname();
+  // ซ่อนช่องค้นหาบนแถบด้านบนในหน้าที่มีช่องค้นหาหลักอยู่แล้ว (หน้าแรก รายการ รับของคืน)
+  // และหน้าที่ไม่ต้องใช้การค้นหา (แจ้งของหาย/พบของ รายการของฉัน)
+  const HIDE_SEARCH_ON = ['/', '/items', '/claim', '/report', '/my-items'];
+  const hasPageSearch = HIDE_SEARCH_ON.includes(pathname) || pathname.startsWith('/claim/');
   
   // บัญชีและสิทธิ์มาจาก Core Hub (SSO) — สลับสิทธิ์จากหน้าเว็บไม่ได้
   const { currentRole, memberId, member, email, loading: sessionLoading } = useRole();
@@ -252,9 +257,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-4 h-16 px-4 sm:px-6 bg-white/80 backdrop-blur-xl border-b border-line">
+    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 md:gap-4 h-16 px-3 sm:px-6 bg-white/80 backdrop-blur-xl border-b border-line">
 
-      <div className="flex items-center gap-3 flex-1 min-w-0">
+      <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <button
           onClick={onMenuClick}
           className="p-2 text-on-surface-variant rounded-xl hover:bg-surface-container hover:text-ink transition-colors cursor-pointer"
@@ -262,8 +267,9 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         >
           <Menu className="w-5 h-5" />
         </button>
-        <span className="sm:hidden"><LogoMark size={32} /></span>
-        {/* ค้นหาด่วน: ส่งคำค้นไปหน้ารายการของหาย */}
+        <span className={hasPageSearch ? '' : 'sm:hidden'}><LogoMark size={32} /></span>
+        {/* ค้นหาด่วน: ส่งคำค้นไปหน้ารายการของหาย (ไม่แสดงในหน้าที่มีช่องค้นหาหลักแล้ว) */}
+        {!hasPageSearch && (
         <form
           onSubmit={(e) => {
             e.preventDefault();
@@ -281,9 +287,10 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
             className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-container/80 border border-transparent text-sm placeholder:text-outline focus:outline-hidden focus:bg-white focus:border-brand-200 focus:ring-4 focus:ring-brand-50 transition-all"
           />
         </form>
+        )}
       </div>
 
-      <div className="flex items-center gap-2.5">
+      <div className="flex items-center gap-1 sm:gap-2.5">
         
         {/* Notifications Dropdown (ซ่อนตัวเลข เอาแค่จุดแดงกระพริบ) */}
         <div className="relative" ref={notifMenuRef}>
@@ -302,7 +309,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           </button>
 
           {isNotifOpen && (
-            <div className="absolute right-0 mt-3 w-80 sm:w-96 bg-white rounded-2xl shadow-2xl border border-line py-3 z-50 animate-fade-in">
+            <div className="fixed left-3 right-3 top-[68px] sm:absolute sm:left-auto sm:right-0 sm:top-auto sm:mt-3 sm:w-96 bg-white rounded-2xl shadow-2xl border border-line py-3 z-50 animate-fade-in">
               <div className="flex items-center justify-between px-4 pb-2.5 border-b border-line">
                 <div className="flex items-center gap-2">
                   <h4 className="font-bold text-sm text-on-surface font-display">การแจ้งเตือนล่าสุด</h4>
@@ -360,7 +367,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
         <div className="relative" ref={userMenuRef}>
           <button 
             onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
-            className="flex items-center gap-2.5 p-1.5 pr-3 rounded-xl hover:bg-brand-50 transition-colors focus:outline-hidden border border-transparent hover:border-line cursor-pointer"
+            className="flex items-center gap-2.5 p-1.5 sm:pr-3 rounded-xl hover:bg-brand-50 transition-colors focus:outline-hidden border border-transparent hover:border-line cursor-pointer"
           >
             <div className="w-10 h-10 rounded-xl bg-primary-container text-white flex items-center justify-center shrink-0 shadow-xs font-display font-bold">
               {initial}
@@ -374,7 +381,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           </button>
 
           {isUserMenuOpen && (
-            <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-2xl border border-line p-4 z-50 animate-fade-in space-y-4">
+            <div className="absolute right-0 mt-3 w-72 max-w-[calc(100vw-24px)] bg-white rounded-2xl shadow-2xl border border-line p-4 z-50 animate-fade-in space-y-4">
               
               <div className="flex items-center gap-3 pb-3 border-b border-line">
                 <div className="w-10 h-10 rounded-xl bg-primary-container text-white flex items-center justify-center shrink-0 shadow-xs font-display font-bold">

@@ -15,7 +15,6 @@ import {
   ArrowRight,
   Sparkles,
   AlertCircle,
-  Eye,
   ShieldCheck,
   FilePlus2
 } from 'lucide-react';
@@ -68,10 +67,10 @@ const createInitialForm = () => ({
   time: '12:00',
   faculty: locations[0].id,
   facultyOther: '',
-  building: locations[0].buildings[0]?.id || '',
-  buildingOther: '',
+  building: '', // ชื่ออาคารที่ผู้ใช้พิมพ์เอง (มีรายชื่ออาคารเดิมเป็นคำแนะนำ)
   room: '',
   locationDetail: '',
+  locationNotes: '',
   contactName: '',
   studentId: '',
   contactPhone: '',
@@ -81,6 +80,14 @@ const createInitialForm = () => ({
   pinX: null as number | null,
   pinY: null as number | null
 });
+
+// ไม่มีคอลัมน์แยกสำหรับจุดสังเกต จึงต่อท้ายไว้ใน description (backend รับได้ไม่เกิน 500 ตัวอักษรรวมกัน)
+const LOCATION_NOTES_HEADING = 'พิกัดและจุดสังเกตเพิ่มเติม:';
+const composeDescription = (description: string, notes: string) => {
+  const desc = description.trim();
+  const extra = notes.trim();
+  return extra ? `${desc}\n\n${LOCATION_NOTES_HEADING} ${extra}` : desc;
+};
 
 export default function ReportPage() {
   const router = useRouter();
@@ -114,7 +121,7 @@ export default function ReportPage() {
     contactPhone: 10,
     contactOther: 100,
     facultyOther: 100,
-    buildingOther: 100,
+    building: 100,
     secretQuestion: 150,
     secretAnswer: 100
   };
@@ -125,12 +132,15 @@ export default function ReportPage() {
     room: formData.room.length > LIMITS.room ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.room} ตัวอักษร)` : '',
     locationDetail: formData.locationDetail.length > LIMITS.locationDetail ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.locationDetail} ตัวอักษร)` : '',
     description: formData.description.length > LIMITS.description ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.description} ตัวอักษร)` : '',
+    locationNotes: formData.description.length <= LIMITS.description
+      && composeDescription(formData.description, formData.locationNotes).length > LIMITS.description
+      ? `รายละเอียดสิ่งของรวมกับจุดสังเกตต้องไม่เกิน ${LIMITS.description} ตัวอักษร` : '',
     contactName: formData.contactName.length > LIMITS.contactName ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.contactName} ตัวอักษร)` : '',
     studentId: formData.studentId.length > LIMITS.studentId ? `รหัสนักศึกษาต้องไม่เกิน ${LIMITS.studentId} หลัก` : '',
     contactPhone: formData.contactPhone.length > LIMITS.contactPhone ? `เบอร์โทรศัพท์ต้องไม่เกิน ${LIMITS.contactPhone} หลัก` : '',
     contactOther: formData.contactOther.length > LIMITS.contactOther ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.contactOther} ตัวอักษร)` : '',
     facultyOther: (formData.faculty === 'other' && formData.facultyOther.length > LIMITS.facultyOther) ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.facultyOther} ตัวอักษร)` : '',
-    buildingOther: ((formData.faculty === 'other' || formData.building === 'other-bld') && formData.buildingOther.length > LIMITS.buildingOther) ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.buildingOther} ตัวอักษร)` : '',
+    building: formData.building.length > LIMITS.building ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.building} ตัวอักษร)` : '',
     secretQuestion: formData.secretQuestion.length > LIMITS.secretQuestion ? `ข้อความยาวเกินกำหนด (สูงสุด ${LIMITS.secretQuestion} ตัวอักษร)` : '',
     secretAnswer: formData.secretQuestion.trim() && !formData.secretAnswer.trim()
       ? 'กรุณากรอกคำตอบของคำถามยืนยัน'
@@ -143,7 +153,7 @@ export default function ReportPage() {
   const missingFields: MissingField[] = [
     ...(formData.faculty === 'other'
       ? [{ id: 'report-faculty-other', label: 'คณะ / หน่วยงาน', message: requireText(formData.facultyOther, 'กรุณาระบุคณะ / หน่วยงาน') }]
-      : []),
+      : [{ id: 'report-building', label: 'อาคาร / ตึก', message: requireText(formData.building, 'กรุณาระบุอาคาร / ตึก') }]),
     { id: 'report-room', label: 'ห้อง / ชั้น', message: requireText(formData.room, 'กรุณากรอกห้องหรือชั้น') },
     { id: 'report-location-detail', label: 'รายละเอียดสถานที่', message: requireText(formData.locationDetail, 'กรุณาอธิบายสถานที่เพิ่มเติม') },
     { id: 'report-name', label: 'ชื่อสิ่งของ', message: requireText(formData.name, 'กรุณากรอกชื่อสิ่งของ') },
@@ -213,10 +223,13 @@ export default function ReportPage() {
   };
 
   const selectedFacultyObj = locations.find((l) => l.id === formData.faculty) || locations[0];
-  const buildingOptions = selectedFacultyObj.buildings.map((b) => ({
-    value: b.id,
-    label: b.name
-  }));
+  // รายชื่ออาคารเดิมเป็นคำแนะนำ (<datalist>) ของคณะที่เลือก — เลือก "อื่นๆ" แนะนำอาคารของทุกคณะ
+  const buildingSuggestions = Array.from(new Set(
+    (formData.faculty === 'other' ? locations : [selectedFacultyObj])
+      .flatMap((l) => l.buildings)
+      .filter((b) => b.id !== 'other-bld')
+      .map((b) => b.name)
+  ));
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -236,9 +249,7 @@ export default function ReportPage() {
     const selectedFac = formData.faculty === 'other'
       ? (formData.facultyOther.trim() || 'อื่นๆ')
       : (locations.find(l => l.id === formData.faculty)?.name || '');
-    const selectedBld = (formData.faculty === 'other' || formData.building === 'other-bld')
-      ? (formData.buildingOther.trim() || selectedFacultyObj?.buildings.find(b => b.id === formData.building)?.name || '')
-      : (selectedFacultyObj?.buildings.find(b => b.id === formData.building)?.name || '');
+    const selectedBld = formData.building.trim();
     const locationString = `${selectedFac}${selectedBld ? ` (${selectedBld}${formData.room ? ` ห้อง ${formData.room}` : ''})` : formData.room ? ` (${formData.room})` : ''} ${formData.locationDetail}`;
 
     try {
@@ -246,7 +257,7 @@ export default function ReportPage() {
         reportType: formData.reportType,
         urgency: formData.urgency,
         name: formData.name.trim(),
-        description: formData.description.trim(),
+        description: composeDescription(formData.description, formData.locationNotes),
         category: selectedCat,
         location: locationString.trim(),
         faculty: selectedFac,
@@ -392,12 +403,12 @@ export default function ReportPage() {
                       options={locations.map(loc => ({ value: loc.id, label: loc.name }))}
                       value={formData.faculty}
                       onChange={(e) => {
-                        const newFac = e.target.value;
-                        const facObj = locations.find(l => l.id === newFac) || locations[0];
+                        // ถ้าชื่ออาคารเป็นคำแนะนำของคณะเดิม ล้างออก / ถ้าพิมพ์เองไว้ เก็บไว้ตามเดิม
+                        const wasSuggestion = selectedFacultyObj.buildings.some(b => b.name === formData.building);
                         setFormData({
                           ...formData,
-                          faculty: newFac,
-                          building: facObj.buildings[0]?.id || ''
+                          faculty: e.target.value,
+                          building: wasSuggestion ? '' : formData.building
                         });
                       }}
                       placeholder="เลือกคณะ"
@@ -417,23 +428,24 @@ export default function ReportPage() {
                   </div>
 
                   <div>
-                    <label className="block font-semibold text-on-surface-variant mb-1">อาคาร / ตึก <span className="text-red-500">*</span></label>
-                    <Select
-                      options={buildingOptions}
+                    <label htmlFor="report-building" className="block font-semibold text-on-surface-variant mb-1">
+                      อาคาร / ตึก {formData.faculty === 'other' ? <span className="font-normal text-outline">(ถ้ามี)</span> : <span className="text-red-500">*</span>}
+                    </label>
+                    {/* พิมพ์ชื่ออาคารเองได้ทั้งหมด มีรายชื่ออาคารเดิมเป็นคำแนะนำ */}
+                    <Input
+                      id="report-building"
+                      type="text"
+                      list="report-building-options"
+                      autoComplete="off"
+                      required={formData.faculty !== 'other'}
+                      error={errors.building || missingMsg('report-building')}
                       value={formData.building}
-                      onChange={(e) => setFormData({...formData, building: e.target.value})}
-                      placeholder="เลือกอาคาร"
+                      onChange={(e) => setFormData({ ...formData, building: e.target.value })}
+                      placeholder={buildingSuggestions[0] ? `เช่น ${buildingSuggestions[0]} หรือพิมพ์ชื่ออาคารอื่น` : 'พิมพ์ชื่ออาคาร / ตึก'}
                     />
-                    {(formData.faculty === 'other' || formData.building === 'other-bld') && (
-                      <div className="mt-2">
-                        <Input
-                          error={errors.buildingOther}
-                          value={formData.buildingOther}
-                          onChange={(e) => setFormData({ ...formData, buildingOther: e.target.value })}
-                          placeholder="ระบุชื่ออาคาร / ตึก (ถ้ามี)"
-                        />
-                      </div>
-                    )}
+                    <datalist id="report-building-options">
+                      {buildingSuggestions.map((name) => <option key={name} value={name} />)}
+                    </datalist>
                   </div>
 
                   <div>
@@ -465,9 +477,10 @@ export default function ReportPage() {
                     <label className="block font-semibold text-on-surface-variant mb-1">
                       ระบุตำแหน่งบนแผนที่ (ไม่บังคับ)
                     </label>
+                    <p className="text-[11px] text-outline mb-2">คลิกบนแผนที่เพื่อปักหมุด แล้วลากหมุดเพื่อขยับให้ตรงจุด (เลือกได้เฉพาะในเขตมหาวิทยาลัย)</p>
                     <FreeMap
                       key={mapKey}
-                      onLocationSelect={(pos: any) => setFormData(prev => ({ ...prev, pinX: pos.lat, pinY: pos.lng }))}
+                      onLocationSelect={(pos) => setFormData(prev => ({ ...prev, pinX: pos.lat, pinY: pos.lng }))}
                     />
                     {/* แสดงข้อความแจ้งเตือนเมื่อปักหมุดสำเร็จ */}
                     {(formData.pinX && formData.pinY) && (
@@ -482,25 +495,42 @@ export default function ReportPage() {
                       </div>
                     )}
                   </div>
-                </div>
-              </div>
 
-              {/* Live Preview Card */}
-              <div className="bg-brand-50 p-6 rounded-3xl border border-brand-100 space-y-3">
-                <div className="flex items-center gap-1.5 text-xs font-bold text-primary-container">
-                  <Eye className="w-4 h-4" />
-                  <span>ตัวอย่างการแสดงผลในการ์ด (Live Preview)</span>
-                </div>
-                <div className="bg-white p-4 rounded-2xl border border-line shadow-xs space-y-2">
-                  <div className="flex justify-between items-start">
-                    <span className="text-[10px] font-mono bg-surface-container px-2 py-0.5 rounded-sm text-on-surface-variant">LF-2026-XX</span>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-sm font-semibold ${isFound ? 'bg-emerald-100 text-emerald-800' : 'bg-amber-100 text-amber-800'}`}>{isFound ? 'พบแล้ว' : 'กำลังค้นหา'}</span>
+                  {/* จุดสังเกตเพิ่มเติม — ต่อท้ายรายละเอียดสิ่งของตอนบันทึก */}
+                  <div className="pt-2">
+                    <label htmlFor="report-location-notes" className="block font-semibold text-on-surface-variant mb-1">
+                      พิกัดและจุดสังเกตเพิ่มเติม (ไม่บังคับ)
+                    </label>
+                    <textarea
+                      id="report-location-notes"
+                      className={`w-full rounded-2xl border px-3.5 py-2.5 text-sm focus:outline-hidden transition-colors ${
+                        errors.locationNotes
+                          ? 'border-red-400 bg-red-50/30 focus:border-red-500 focus:ring-2 focus:ring-red-200'
+                          : 'border-line bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-50'
+                      }`}
+                      rows={3}
+                      value={formData.locationNotes}
+                      onChange={(e) => setFormData({ ...formData, locationNotes: e.target.value })}
+                      placeholder={isFound
+                        ? 'เช่น พบใต้ม้านั่งหน้าโรงอาหาร ฝากไว้ที่ป้อม รปภ. ประตูหน้า'
+                        : 'เช่น แอป Find My / AirTag / Smart Tag ชี้ตำแหน่งล่าสุดแถวลานจอดรถหลังตึก เวลา 14:30 หรือพิกัดที่แอปแสดง'}
+                    />
+                    <div className="mt-1 flex items-start justify-between gap-2">
+                      {errors.locationNotes ? (
+                        <p className="text-xs text-red-600 flex items-center gap-1">
+                          <AlertCircle className="w-3.5 h-3.5 shrink-0" />
+                          <span>{errors.locationNotes}</span>
+                        </p>
+                      ) : (
+                        <p className="text-[11px] text-outline">ข้อความนี้จะต่อท้ายรายละเอียดสิ่งของ ให้ผู้ที่ตามหาเห็นด้วย</p>
+                      )}
+                      <span className="text-[11px] text-outline shrink-0">
+                        {composeDescription(formData.description, formData.locationNotes).length}/{LIMITS.description}
+                      </span>
+                    </div>
                   </div>
-                  <h4 className="font-bold text-sm text-on-surface font-display">{formData.name || 'ชื่อสิ่งของ (ตัวอย่าง)'}</h4>
-                  <p className="text-[11px] text-on-surface-variant line-clamp-1">{formData.description || 'รายละเอียดลักษณะสิ่งของ...'}</p>
                 </div>
               </div>
-
             </div>
 
             {/* ฝั่งขวา: ข้อมูลสิ่งของและช่องทางติดต่อ */}
@@ -692,7 +722,7 @@ export default function ReportPage() {
                           const val = e.target.value.replace(/\D/g, '');
                           setFormData({...formData, studentId: val});
                         }}
-                        placeholder="เช่น 6704101361"
+                        placeholder="เช่น 670XXXXXXX"
                       />
                     </div>
 
@@ -727,7 +757,7 @@ export default function ReportPage() {
                         error={errors.contactOther || missingMsg('report-contact-other')}
                         value={formData.contactOther}
                         onChange={(e) => setFormData({...formData, contactOther: e.target.value})}
-                        placeholder="เช่น Line ID: kuriya_t / Email: student@university.ac.th"
+                        placeholder="เช่น Line ID หรือ Email"
                       />
                     </div>
 
