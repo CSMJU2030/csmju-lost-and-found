@@ -27,7 +27,9 @@ export async function GET(request: NextRequest) {
   }
 
   const next = safeNext(request.cookies.get(NEXT_COOKIE)?.value) ?? '/';
-  const res = NextResponse.redirect(new URL(next, request.url), 302);
+  // Location แบบ relative: ใน container (standalone) request.url เป็น http://0.0.0.0:3000 ซึ่งเบราว์เซอร์เปิดไม่ได้
+  // ปล่อยให้เบราว์เซอร์ต่อกับ origin ที่ผู้ใช้เปิดอยู่จริง (localhost:3220 / <ชื่อ>.jowave.com)
+  const res = new NextResponse(null, { status: 302, headers: { Location: next } });
   for (const [key, value] of Object.entries(headers)) res.headers.set(key, value);
   // ต่อ header เองทีละบรรทัด (res.cookies.set จะเขียนทับ Set-Cookie ที่ได้จาก backend)
   // คุกกี้ session ของ backend ต้องมาก่อน แล้วค่อยลบคุกกี้ next ที่ใช้ครั้งเดียว
