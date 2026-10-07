@@ -35,7 +35,7 @@ export default function Logo({ showText = true, size = 40, className = '' }: Log
       {showText && (
         <span className="flex flex-col leading-none">
           <span className="font-display font-semibold text-[17px] text-ink tracking-tight">
-            Missing<span className="text-brand-600">Items</span>
+            Lost &amp; <span className="text-brand-600">Found</span>
           </span>
           <span className="text-[11px] text-on-surface-variant mt-1">ระบบแจ้งของหาย ม.แม่โจ้</span>
         </span>

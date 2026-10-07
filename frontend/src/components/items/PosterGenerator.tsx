@@ -120,7 +120,7 @@ export default function PosterGenerator({ item, isOpen, onClose }: PosterGenerat
     ctx.font = `bold 16px ${font}`;
     ctx.fillStyle = color.highlight;
     ctx.textBaseline = 'middle';
-    ctx.fillText('MISSING ITEMS SYSTEM', 64, 44);
+    ctx.fillText('LOST & FOUND SYSTEM', 64, 44);
 
     // Title
     ctx.font = `bold 48px ${font}`;
@@ -262,7 +262,7 @@ export default function PosterGenerator({ item, isOpen, onClose }: PosterGenerat
     ctx.fillText('สแกน QR Code เพื่อดูรายละเอียดเพิ่มเติม', PAD, curY + 10);
     ctx.font = `bold 16px ${font}`;
     ctx.fillStyle = color.onSurfaceVariant;
-    ctx.fillText('Missing Items System', PAD, curY + 34);
+    ctx.fillText('Lost & Found System', PAD, curY + 34);
     ctx.font = `12px ${font}`;
     ctx.fillStyle = color.outline;
     ctx.fillText('ระบบแจ้งทรัพย์สินสูญหาย • มหาวิทยาลัยแม่โจ้', PAD, curY + 54);
