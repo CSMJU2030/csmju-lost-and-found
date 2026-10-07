@@ -10,11 +10,13 @@ import {
   PackageSearch,
   HandHelping,
   ClipboardList,
+  LogOut,
+  ArrowLeft,
   X,
-  ArrowRight
 } from 'lucide-react';
 import Logo from '@/components/layout/Logo';
 import { useRole } from '@/context/RoleContext';
+import { signOut } from '@/lib/api';
 
 interface SidebarProps {
   isOpen: boolean;
@@ -23,25 +25,26 @@ interface SidebarProps {
 
 interface NavItem {
   label: string;
+  /** ชื่อภาษาอังกฤษ แสดงเป็นตัวรองต่อท้ายชื่อไทย */
+  sub: string;
   icon: React.ElementType;
   href: string;
   adminOnly?: boolean;
 }
 
-const navGroups: { title: string; items: NavItem[] }[] = [
+const navGroups: { title?: string; items: NavItem[] }[] = [
   {
-    title: 'เมนูหลัก',
     items: [
-      { label: 'หน้าแรก', icon: Home, href: '/' },
-      { label: 'ค้นหาของหาย', icon: PackageSearch, href: '/items' },
-      { label: 'แจ้งของหาย / พบของ', icon: FilePlus2, href: '/report' },
-      { label: 'รับของคืน / ส่งคืนเจ้าของ', icon: HandHelping, href: '/claim' },
-      { label: 'รายการของฉัน', icon: ClipboardList, href: '/my-items' },
+      { label: 'หน้าแรก', sub: 'Home', icon: Home, href: '/' },
+      { label: 'ค้นหาของหาย', sub: 'Search', icon: PackageSearch, href: '/items' },
+      { label: 'แจ้งของหาย / พบของ', sub: 'Report', icon: FilePlus2, href: '/report' },
+      { label: 'รับของคืน / ส่งคืนเจ้าของ', sub: 'Claim', icon: HandHelping, href: '/claim' },
+      { label: 'รายการของฉัน', sub: 'My items', icon: ClipboardList, href: '/my-items' },
     ],
   },
   {
     title: 'สำหรับเจ้าหน้าที่',
-    items: [{ label: 'แผงควบคุมแอดมิน', icon: Shield, href: '/admin', adminOnly: true }],
+    items: [{ label: 'แผงควบคุมแอดมิน', sub: 'Admin', icon: Shield, href: '/admin', adminOnly: true }],
   },
 ];
 
@@ -68,25 +71,43 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-[272px] bg-white border-r border-line transform transition-transform duration-300 ease-in-out ${
+        className={`fixed inset-y-0 left-0 z-50 w-[272px] bg-brand-gradient text-white shadow-xl transform transition-transform duration-300 ease-in-out ${
           isOpen ? 'translate-x-0' : '-translate-x-full'
         } flex flex-col`}
       >
-        {/* Logo */}
-        <div className="h-16 px-5 flex items-center justify-between">
-          <Link href="/" onClick={() => window.innerWidth < 1024 && onClose()}>
+        {/* โลโก้ในกรอบขาว */}
+        <div className="relative px-4 pt-6">
+          <Link
+            href="/"
+            onClick={handleNavClick}
+            className="flex items-center justify-center rounded-xl bg-white px-4 py-6"
+            aria-label="Lost & Found — หน้าแรก"
+          >
             <Logo />
           </Link>
-          <button onClick={onClose} className="lg:hidden p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container" aria-label="ปิดเมนู">
+          <button
+            onClick={onClose}
+            className="lg:hidden absolute top-8 right-7 p-1.5 rounded-lg text-on-surface-variant hover:bg-surface-container"
+            aria-label="ปิดเมนู"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
 
+        {/* กลับเว็บ Core Hub */}
+        <a
+          href="/portal"
+          className="mt-6 mx-4 flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-semibold text-white hover:bg-white/10 transition-colors"
+        >
+          <ArrowLeft className="w-[18px] h-[18px]" aria-hidden="true" />
+          กลับ CSMJU Portal
+        </a>
+
         {/* Navigation */}
-        <nav className="flex-1 px-3 pt-4 pb-6 space-y-6 overflow-y-auto">
+        <nav className="flex-1 pt-6 pb-6 space-y-6 overflow-y-auto" aria-label="เมนูหลัก">
           {visibleGroups.map((group) => (
-            <div key={group.title} className="space-y-1">
-              <p className="px-3 pb-1 text-[11px] font-semibold text-outline">{group.title}</p>
+            <div key={group.title ?? 'main'} className="space-y-1">
+              {group.title && <p className="px-6 pb-1 text-[11px] font-semibold text-primary-fixed/80">{group.title}</p>}
               {group.items.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(item.href);
@@ -95,15 +116,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
                     key={item.href}
                     href={item.href}
                     onClick={handleNavClick}
-                    className={`group flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm transition-colors ${
-                      active
-                        ? 'bg-brand-50 text-brand-700 font-semibold'
-                        : 'text-on-surface-variant hover:bg-surface hover:text-ink'
+                    aria-current={active ? 'page' : undefined}
+                    className={`flex items-center gap-3 border-l-4 pl-5 pr-4 py-3 text-sm rounded-r-lg transition-colors ${
+                      active ? 'border-accent bg-white/15' : 'border-transparent hover:bg-white/10'
                     }`}
                   >
-                    <Icon className={`w-[18px] h-[18px] ${active ? 'text-brand-600' : 'text-outline group-hover:text-on-surface-variant'}`} />
-                    <span className="flex-1">{item.label}</span>
-                    {active && <span className="w-1.5 h-1.5 rounded-full bg-brand-600" />}
+                    <Icon className="w-5 h-5 shrink-0" aria-hidden="true" />
+                    <span className="flex-1 min-w-0">
+                      <span className="font-semibold">{item.label}</span>
+                      <span className="ml-2 text-xs text-primary-fixed/80">{item.sub}</span>
+                    </span>
                   </Link>
                 );
               })}
@@ -111,22 +133,16 @@ export default function Sidebar({ isOpen, onClose }: SidebarProps) {
           ))}
         </nav>
 
-        {/* CTA card */}
+        {/* ออกจากระบบ */}
         <div className="p-4">
-          <div className="relative overflow-hidden rounded-2xl bg-brand-gradient p-4 text-white">
-            <div className="absolute inset-0 bg-dots opacity-60 pointer-events-none" />
-            <div className="relative space-y-1">
-              <p className="font-display font-semibold text-sm">เก็บของได้ใช่ไหม?</p>
-              <p className="text-xs text-white/80 leading-relaxed">แจ้งพบของในไม่กี่นาที ระบบจะช่วยจับคู่กับเจ้าของให้อัตโนมัติ</p>
-              <Link
-                href="/report"
-                onClick={() => window.innerWidth < 1024 && onClose()}
-                className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-brand-700 hover:bg-brand-50 transition-colors"
-              >
-                แจ้งพบของ <ArrowRight className="w-3.5 h-3.5" />
-              </Link>
-            </div>
-          </div>
+          <button
+            type="button"
+            onClick={signOut}
+            className="flex w-full items-center justify-center gap-2 rounded-xl border border-white/25 bg-white/10 px-4 py-3 text-sm font-semibold text-white backdrop-blur-sm hover:bg-white/20 transition-colors"
+          >
+            <LogOut className="w-[18px] h-[18px]" aria-hidden="true" />
+            ออกจากระบบ
+          </button>
         </div>
       </aside>
     </>
