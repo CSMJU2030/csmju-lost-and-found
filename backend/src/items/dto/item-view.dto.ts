@@ -22,7 +22,7 @@ export class ItemView {
   timeLost!: string;
   status!: ItemStatusValue;
   urgency!: ItemUrgencyValue;
-  /** รูปหลัก (path /uploads/...) หรือค่าว่าง */
+  /** รูปหลัก (path /api/v1/items/:id/images/:imageId — ต้อง login) หรือค่าว่าง */
   imageUrl!: string;
   thumbnails!: string[];
   pinX?: number;

@@ -129,8 +129,15 @@ describe('Lost & Found API (e2e)', () => {
       expect(item.status).toBe('found');
       expect(item.reporterStudentId).toBe('6704100001');
       expect(item.createdAt).toMatch(/Z$/);
-      expect(item.imageUrl).toMatch(/^\/uploads\/.+\.png$/);
-      await http().get(item.imageUrl).expect(200);
+      // รูปเก็บในฐานข้อมูล เปิดผ่าน api ที่ตรวจสิทธิ์ทุกครั้ง (ไม่มี token = 401)
+      expect(item.imageUrl).toMatch(/^\/api\/v1\/items\/[0-9a-f-]{36}\/images\/[0-9a-f-]{36}$/);
+      await http().get(item.imageUrl).expect(401);
+      const file = await call('get', item.imageUrl, 'other').expect(200);
+      expect(file.headers['content-type']).toBe('image/png');
+      expect(file.headers['cache-control']).toBe('private, no-store');
+      expect(file.headers['x-content-type-options']).toBe('nosniff');
+      // ชนิดไฟล์ตรวจจาก byte ต้นไฟล์ — HTML ที่แอบอ้างเป็น image/png ถูกปฏิเสธ
+      await call('post', '/api/v1/items', 'finder', itemBody({ images: ['data:image/png;base64,PGh0bWw+'] })).expect(400);
 
       const publicView = await call('get', `/api/v1/items/${foundItemId}`, 'other').expect(200);
       expect(publicView.body.data.secretQuestion).toBe('ภาพพื้นหลังเป็นรูปอะไร?');

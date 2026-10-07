@@ -124,12 +124,34 @@ model Item {
   claims         Claim[]         @relation("ClaimItem")
   linkedClaims   Claim[]         @relation("ClaimLinkedItem")
   secretAttempts SecretAttempt[]
+  images         ItemImage[]
 
   @@index([status])
   @@index([reportType])
   @@index([reporterId])
   @@index([createdAt(sort: Desc)])
   @@map("items")
+}
+
+/// รูปที่แนบกับรายการ — เก็บไฟล์ต้นฉบับในฐานข้อมูล (container เขียนดิสก์ไม่ได้ · standards deployment.md ข้อ 4.3)
+/// แยกจากตาราง items เพื่อให้ query รายการทั่วไปไม่ต้องดึงคอลัมน์ content
+model ItemImage {
+  id                   String   @id @default(uuid()) @db.Uuid
+  itemId               String   @map("item_id") @db.Uuid
+  /// ลำดับรูปในรายการ — รูปแรก (0) คือรูปหลัก
+  position             Int
+  /// ชนิดที่ตรวจจาก byte ต้นไฟล์ (ไม่เชื่อ Content-Type ที่ส่งมา)
+  mimeType             String   @map("mime_type")
+  sizeBytes            Int      @map("size_bytes")
+  sha256               String   @db.Char(64)
+  content              Bytes
+  uploadedByCoreUserId String   @map("uploaded_by_core_user_id") @db.VarChar(64)
+  createdAt            DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  item Item @relation(fields: [itemId], references: [id], onDelete: Cascade)
+
+  @@index([itemId, position])
+  @@map("item_images")
 }
 
 /// คำขอรับคืน (กับของที่มีคนเก็บได้) / แจ้งส่งคืน (กับของที่มีคนตามหา)

@@ -5,7 +5,7 @@ name: csmju-lost-and-found          # ต้องตรงกับทะเบ
 standards_version: "1.8.4"
 conformance_level: L3                 # L1 · L2 · L3 (ระบบที่มี UI ต้องถึง L3)
 
-# frontend (Next.js :3220) ส่งต่อ /api /uploads และ /auth/callback ไปที่ backend (NestJS :4220)
+# frontend (Next.js :3220) ส่งต่อ /api และ /auth/callback ไปที่ backend (NestJS :4220)
 # เบราว์เซอร์จึงเห็นระบบนี้เป็น origin เดียว — callback_url ที่ลงทะเบียน = http://localhost:3220/auth/callback
 base_url: http://localhost:3220       # URL ของระบบย่อยตอนรันเพื่อทดสอบ
 core_hub_url: http://localhost:3000

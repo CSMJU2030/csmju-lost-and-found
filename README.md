@@ -43,7 +43,7 @@ LostAndFound/                 pnpm workspace (backend + frontend)
 | Core Hub API | http://localhost:3000 |
 | Core Hub web (หน้า login) | http://localhost:3100 |
 | Lost & Found backend | http://localhost:4220 |
-| **Lost & Found (เปิดที่นี่)** | **http://localhost:3220** — ส่งต่อ `/api` `/uploads` `/auth/callback` ไปที่ backend |
+| **Lost & Found (เปิดที่นี่)** | **http://localhost:3220** — ส่งต่อ `/api` และ `/auth/callback` ไปที่ backend |
 
 1. **Core Hub** — ทำตาม [LOCAL_INTEGRATION_GUIDE.md](standards/docs/LOCAL_INTEGRATION_GUIDE.md) ข้อ 4
    แล้วลงทะเบียนระบบนี้ครั้งเดียวตาม [backend/AUTH_INTEGRATION.md](backend/AUTH_INTEGRATION.md)

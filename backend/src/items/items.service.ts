@@ -18,9 +18,14 @@ export const ACTIVE_CLAIM_STATUSES = ['PENDING', 'APPROVED', 'AT_OFFICE'] as con
 
 const withActiveClaims = {
   _count: { select: { claims: { where: { status: { in: [...ACTIVE_CLAIM_STATUSES] } } } } },
+  // เลือกเฉพาะ id — ห้ามดึงคอลัมน์ content (ไฟล์) มากับ query รายการทั่วไป
+  images: { select: { id: true }, orderBy: { position: 'asc' } },
 } satisfies Prisma.ItemInclude;
 
-export type ItemRow = Item & { _count?: { claims: number } };
+export type ItemRow = Item & { _count?: { claims: number }; images?: { id: string }[] };
+
+/** URL ที่เบราว์เซอร์เปิดรูปได้ — ผ่าน api ที่ตรวจสิทธิ์ทุกครั้ง (ไม่เปิดสาธารณะ) */
+const imageUrl = (itemId: string, imageId: string) => `/api/v1/items/${itemId}/images/${imageId}`;
 
 export const NOT_FOUND_ITEM = 'ไม่พบรายการ';
 
@@ -35,6 +40,8 @@ export class ItemsService {
   toView(r: ItemRow, actor?: Actor): ItemView {
     const canSeeSecret =
       !!actor && (actor.memberId === r.reporterId || can(actor.subsystemRole, Permission.ITEM_UPDATE_ANY));
+    // รูปเก่าที่นำเข้าจากระบบเดิมยังเก็บเป็น URL ใน imageUrls — ใช้เมื่อรายการนั้นไม่มีรูปในตาราง item_images
+    const imageUrls = r.images?.length ? r.images.map((img) => imageUrl(r.id, img.id)) : r.imageUrls;
     return {
       id: r.id,
       code: r.code,
@@ -50,8 +57,8 @@ export class ItemsService {
       timeLost: r.incidentTime,
       status: toApiEnum(r.status),
       urgency: toApiEnum(r.urgency),
-      imageUrl: r.imageUrls[0] ?? '',
-      thumbnails: r.imageUrls,
+      imageUrl: imageUrls[0] ?? '',
+      thumbnails: imageUrls,
       ...(r.pinLat != null && r.pinLng != null ? { pinX: r.pinLat, pinY: r.pinLng } : {}),
       ...(r.secretQuestion ? { secretQuestion: r.secretQuestion } : {}),
       ...(r.secretAnswer && canSeeSecret ? { secretAnswer: r.secretAnswer } : {}),
@@ -121,54 +128,62 @@ export class ItemsService {
   }
 
   private async allForMatching(): Promise<ItemView[]> {
-    return (await this.prisma.item.findMany({ where: { status: { not: 'RETURNED' } } })).map((r) => this.toView(r));
+    return (
+      await this.prisma.item.findMany({ where: { status: { not: 'RETURNED' } }, include: withActiveClaims })
+    ).map((r) => this.toView(r));
   }
 
-  async create(actor: Actor, dto: CreateItemDto): Promise<ItemView> {
-    const urls = (dto.images ?? []).map((image) => this.images.save(image));
+  async create(actor: Actor, coreUserId: string, dto: CreateItemDto): Promise<ItemView> {
+    const images = (dto.images ?? []).map((image) => this.images.parse(image));
     const isFound = dto.reportType === 'found';
-    try {
-      // มีคนแจ้งพร้อมกันอาจได้รหัสเดียวกัน -> ลองรหัสถัดไปใหม่ (unique เดียวนอกจาก id คือ code)
-      for (let attempt = 0; ; attempt++) {
-        try {
-          const created = await this.prisma.item.create({
-            data: {
-              code: await this.nextItemCode(),
-              reportType: toDbEnum(dto.reportType),
-              name: dto.name,
-              description: dto.description,
-              category: dto.category,
-              location: dto.location,
-              faculty: dto.faculty ?? '',
-              building: dto.building ?? '',
-              room: dto.room,
-              incidentDate: fromDateOnly(dto.dateLost),
-              incidentTime: dto.timeLost,
-              status: isFound ? 'FOUND' : 'SEARCHING',
-              urgency: toDbEnum(dto.urgency ?? 'normal'),
-              imageUrls: urls,
-              pinLat: dto.pinX ?? null,
-              pinLng: dto.pinY ?? null,
-              secretQuestion: isFound ? dto.secretQuestion || null : null,
-              secretAnswer: isFound ? dto.secretAnswer || null : null,
-              reporterId: actor.memberId,
-              reporterName: dto.reporterName,
-              reporterStudentCode: dto.reporterStudentId || null,
-              reporterPhone: dto.reporterPhone,
-              reporterContact: dto.reporterContact,
+    // มีคนแจ้งพร้อมกันอาจได้รหัสเดียวกัน -> ลองรหัสถัดไปใหม่ (unique เดียวนอกจาก id คือ code)
+    for (let attempt = 0; ; attempt++) {
+      try {
+        const created = await this.prisma.item.create({
+          data: {
+            code: await this.nextItemCode(),
+            reportType: toDbEnum(dto.reportType),
+            name: dto.name,
+            description: dto.description,
+            category: dto.category,
+            location: dto.location,
+            faculty: dto.faculty ?? '',
+            building: dto.building ?? '',
+            room: dto.room,
+            incidentDate: fromDateOnly(dto.dateLost),
+            incidentTime: dto.timeLost,
+            status: isFound ? 'FOUND' : 'SEARCHING',
+            urgency: toDbEnum(dto.urgency ?? 'normal'),
+            images: {
+              create: images.map((image, position) => ({ ...image, position, uploadedByCoreUserId: coreUserId })),
             },
-            include: withActiveClaims,
-          });
-          return this.toView(created, actor);
-        } catch (error) {
-          const duplicate = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
-          if (!duplicate || attempt >= 4) throw error;
-        }
+            pinLat: dto.pinX ?? null,
+            pinLng: dto.pinY ?? null,
+            secretQuestion: isFound ? dto.secretQuestion || null : null,
+            secretAnswer: isFound ? dto.secretAnswer || null : null,
+            reporterId: actor.memberId,
+            reporterName: dto.reporterName,
+            reporterStudentCode: dto.reporterStudentId || null,
+            reporterPhone: dto.reporterPhone,
+            reporterContact: dto.reporterContact,
+          },
+          include: withActiveClaims,
+        });
+        return this.toView(created, actor);
+      } catch (error) {
+        const duplicate = error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002';
+        if (!duplicate || attempt >= 4) throw error;
       }
-    } catch (error) {
-      this.images.remove(urls); // บันทึกไม่สำเร็จ -> ไม่ทิ้งไฟล์รูปค้างไว้
-      throw error;
     }
+
+  }
+
+  /** ไฟล์รูป (ใช้ตอบ GET /items/:id/images/:imageId) — คืน null เมื่อไม่มีรูปนั้นในรายการนี้ */
+  findImage(itemId: string, imageId: string) {
+    return this.prisma.itemImage.findFirst({
+      where: { id: imageId, itemId },
+      select: { mimeType: true, content: true },
+    });
   }
 
   // รหัสรายการแบบ LF-2026-00001 เรียงตามปี
@@ -210,7 +225,6 @@ export class ItemsService {
     const row = await this.findRowOrThrow(id);
     this.assertOwnerOrStaff(actor, row, Permission.ITEM_DELETE_ANY);
     await this.prisma.item.delete({ where: { id } });
-    this.images.remove(row.imageUrls);
     return { id, deleted: true };
   }
 

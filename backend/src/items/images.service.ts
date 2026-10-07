@@ -1,49 +1,51 @@
-import { mkdirSync, rm, writeFileSync } from 'node:fs';
-import { basename, join } from 'node:path';
-import { randomUUID } from 'node:crypto';
+import { createHash } from 'node:crypto';
 import { HttpStatus, Injectable } from '@nestjs/common';
-import { ConfigService } from '@nestjs/config';
 import { AppException, ErrorCode } from '../common/errors';
 
-const EXT: Record<string, string> = { 'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp' };
 const MAX_BYTES = 2 * 1024 * 1024;
+const DATA_URL = /^data:image\/[a-z0-9.+-]+;base64,([A-Za-z0-9+/=]+)$/;
 
-/** เก็บรูปที่แนบมากับรายการเป็นไฟล์ใน uploads/ (ฐานข้อมูลเก็บแค่ path) */
+export interface ParsedImage {
+  mimeType: string;
+  sizeBytes: number;
+  sha256: string;
+  content: Uint8Array<ArrayBuffer>;
+}
+
+/**
+ * ตรวจและแปลงรูปที่แนบมากับรายการ — ไฟล์ต้นฉบับเก็บในตาราง item_images
+ * (container เขียนดิสก์ไม่ได้ · standards deployment.md ข้อ 4.3: ชนิดไฟล์ตรวจจาก byte ต้นไฟล์ ไม่เชื่อ Content-Type)
+ */
 @Injectable()
 export class ImagesService {
-  private readonly dir: string;
-
-  constructor(config: ConfigService) {
-    this.dir = config.get<string>('uploadDir', 'uploads');
-  }
-
-  // รับ data URL จากหน้าเว็บ แล้วคืน path ที่เปิดดูได้ (/uploads/xxx.jpg)
-  save(dataUrl: string): string {
-    if (dataUrl.startsWith('/uploads/')) return dataUrl; // รูปที่บันทึกไว้แล้ว
-    const match = /^data:(image\/(?:jpeg|png|webp));base64,([A-Za-z0-9+/=]+)$/.exec(dataUrl);
-    if (!match) {
+  /** รับ data URL จากหน้าเว็บ แล้วคืนไฟล์ที่ตรวจแล้ว (ชนิดมาจาก byte ต้นไฟล์ ไม่ใช่จาก prefix ของ data URL) */
+  parse(dataUrl: string): ParsedImage {
+    const match = DATA_URL.exec(dataUrl);
+    const content = match ? Buffer.from(match[1], 'base64') : null;
+    const mimeType = content ? sniffMime(content) : null;
+    if (!content || !mimeType) {
       throw new AppException(ErrorCode.VALIDATION_ERROR, 'รูปภาพต้องเป็นไฟล์ JPG, PNG หรือ WEBP', HttpStatus.BAD_REQUEST, [
         'images: รูปแบบรูปภาพไม่ถูกต้อง',
       ]);
     }
-    const [, mime, base64] = match;
-    const buffer = Buffer.from(base64, 'base64');
-    if (buffer.length > MAX_BYTES) {
+    if (content.length > MAX_BYTES) {
       throw new AppException(ErrorCode.VALIDATION_ERROR, 'รูปภาพต้องมีขนาดไม่เกิน 2 MB ต่อรูป', HttpStatus.BAD_REQUEST, [
         'images: รูปภาพใหญ่เกินไป',
       ]);
     }
-
-    mkdirSync(this.dir, { recursive: true });
-    const filename = `${randomUUID()}.${EXT[mime]}`;
-    writeFileSync(join(this.dir, filename), buffer);
-    return `/uploads/${filename}`;
+    return {
+      mimeType,
+      sizeBytes: content.length,
+      sha256: createHash('sha256').update(content).digest('hex'),
+      content: new Uint8Array(content),
+    };
   }
+}
 
-  remove(urls: string[]): void {
-    for (const url of urls) {
-      if (!url.startsWith('/uploads/')) continue;
-      rm(join(this.dir, basename(url)), { force: true }, () => undefined);
-    }
-  }
+/** JPEG `FF D8 FF` · PNG `89 50 4E 47` · WebP `RIFF....WEBP` — ชนิดอื่น (รวม SVG/HTML) ไม่รับ */
+function sniffMime(b: Buffer): string | null {
+  if (b.length >= 3 && b[0] === 0xff && b[1] === 0xd8 && b[2] === 0xff) return 'image/jpeg';
+  if (b.length >= 4 && b[0] === 0x89 && b[1] === 0x50 && b[2] === 0x4e && b[3] === 0x47) return 'image/png';
+  if (b.length >= 12 && b.toString('ascii', 0, 4) === 'RIFF' && b.toString('ascii', 8, 12) === 'WEBP') return 'image/webp';
+  return null;
 }
