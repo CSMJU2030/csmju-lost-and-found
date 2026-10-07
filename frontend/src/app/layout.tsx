@@ -40,7 +40,7 @@ export default function RootLayout({
   return (
     <html lang="th" className={`${bodyFont.variable} ${displayFont.variable}`}>
       <head>
-        <title>Missing Items — ระบบแจ้งของหาย ม.แม่โจ้</title>
+        <title>Lost & Found — ระบบแจ้งของหาย ม.แม่โจ้</title>
       </head>
       <body className="font-sans bg-surface text-ink antialiased">
         <RoleProvider>

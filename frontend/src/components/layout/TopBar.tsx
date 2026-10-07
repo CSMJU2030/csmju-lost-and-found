@@ -177,7 +177,7 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           {
             id: 'sys-1',
             targetUrl: '/',
-            title: 'ยินดีต้อนรับสู่ Missing Items System',
+            title: 'ยินดีต้อนรับสู่ Lost & Found System',
             desc: 'ระบบสารสนเทศติดตามทรัพย์สินสูญหายภายในสถาบัน',
             time: 'พร้อมใช้งาน',
             read: savedReadState.includes('sys-1'),
