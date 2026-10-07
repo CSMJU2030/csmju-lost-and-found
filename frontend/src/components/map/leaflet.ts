@@ -80,8 +80,9 @@ const STATUS_STYLE: Record<LostItem['status'], { label: string; className: strin
 const escapeHtml = (value: string) =>
   value.replace(/[&<>"']/g, (ch) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[ch] as string);
 
-// รูปต้องเป็น path ที่ระบบอัปโหลดไว้ (/uploads/...) หรือ data URL ที่ผู้ใช้เพิ่งเลือก — ไม่รับ URL อื่น
-const safeImageSrc = (src: string) => (/^\/uploads\/[\w.-]+$/.test(src) || src.startsWith('data:image/') ? src : '');
+// รูปต้องเป็น path ที่ระบบเก็บไว้ (/api/v1/items/<id>/images/<id>) หรือ data URL ที่ผู้ใช้เพิ่งเลือก — ไม่รับ URL อื่น
+const safeImageSrc = (src: string) =>
+  /^\/api\/v1\/items\/[\w-]+\/images\/[\w-]+$/.test(src) || src.startsWith('data:image/') ? src : '';
 
 const PIN_SIZE = 48; // w-12 h-12
 const PIN_HEIGHT = PIN_SIZE + 8; // รวมปลายหมุดด้านล่าง

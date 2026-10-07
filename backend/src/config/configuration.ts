@@ -1,5 +1,3 @@
-import { resolve } from 'node:path';
-
 /**
  * All environment-specific values live here. Nothing in the application code
  * may hard-code a URL, issuer, audience or secret (spec §30, §41.15).
@@ -9,8 +7,6 @@ export interface AppConfig {
   port: number;
   subsystemId: string;
   subsystemName: string;
-  /** โฟลเดอร์เก็บรูปที่ผู้ใช้อัปโหลด (ฐานข้อมูลเก็บแค่ path /uploads/...) */
-  uploadDir: string;
   /** ตอบคำถามยืนยันความเป็นเจ้าของผิดได้กี่ครั้งก่อนถูกล็อก */
   maxSecretAttempts: number;
   coreHub: {
@@ -38,7 +34,6 @@ export default (): AppConfig => {
     port: num(process.env.PORT, 4220),
     subsystemId: process.env.SUBSYSTEM_ID ?? 'csmju-lost-and-found',
     subsystemName: process.env.SUBSYSTEM_NAME ?? 'Lost & Found',
-    uploadDir: resolve(process.cwd(), process.env.UPLOAD_DIR || 'uploads'),
     maxSecretAttempts: num(process.env.MAX_SECRET_ATTEMPTS, 3),
     coreHub: {
       url: coreHubUrl,

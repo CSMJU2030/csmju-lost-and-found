@@ -1,6 +1,6 @@
 // ตัวเรียก Backend API (backend/) — ทุกหน้าเรียกข้อมูลผ่านไฟล์นี้
 //
-// - เรียกแบบ same-origin (/api/v1/...) — next.config.js ส่งต่อ /api /auth /uploads ไปที่ backend
+// - เรียกแบบ same-origin (/api/v1/...) — next.config.js ส่งต่อ /api /auth ไปที่ backend
 //   เบราว์เซอร์จึงแนบคุกกี้ session (core_hub_access_token, HttpOnly) ให้เอง
 //   หน้าเว็บไม่เคยเห็นหรือเก็บ token (มาตรฐาน SEC-03)
 // - ทุกคำตอบห่อด้วย { success, data, meta? } หรือ { success: false, error: { code, message, details? } }

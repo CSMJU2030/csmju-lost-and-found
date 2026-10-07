@@ -15,7 +15,7 @@ pnpm --filter backend start:dev     # http://localhost:4220 (รีโหลด�
 ```
 
 ต้องมี Core Hub รันอยู่ (`CORE_HUB_URL`) เพื่อดึง JWKS — ไม่มีโหมดข้ามการตรวจ token แม้ตอนพัฒนา (auth-contract ข้อ 9)
-เบราว์เซอร์ใช้งานผ่าน frontend (:3220) ซึ่งส่งต่อ `/api` `/auth` `/uploads` มาที่นี่
+เบราว์เซอร์ใช้งานผ่าน frontend (:3220) ซึ่งส่งต่อ `/api` และ `/auth/callback` มาที่นี่
 
 ## การยืนยันตัวตนและสิทธิ์
 
@@ -41,7 +41,7 @@ pnpm --filter backend start:dev     # http://localhost:4220 (รีโหลด�
 | เชื่อมต่อ | `DATABASE_URL` ใน `.env` — ห้ามใส่ connection string ในโค้ด |
 | โครงสร้าง | [prisma/schema.prisma](prisma/schema.prisma) · ประวัติ [prisma/migrations/](prisma/migrations) |
 | ฐานข้อมูลทดสอบ | `lost_and_found_test_db` (e2e สร้างให้เอง ใช้ schema ชั่วคราวแล้วลบทิ้ง) |
-| รูปภาพ | ไฟล์ใน `uploads/` (ฐานข้อมูลเก็บแค่ path) |
+| รูปภาพ | เก็บในตาราง `item_images` (คอลัมน์ `content` ชนิด bytea) เปิดผ่าน `GET /api/v1/items/:id/images/:imageId` |
 
 | ตาราง | เก็บอะไร |
 |---|---|
@@ -74,7 +74,7 @@ pnpm --filter backend start:dev     # http://localhost:4220 (รีโหลด�
 ```text
 src/
 ├── main.ts               setGlobalPrefix('api') ยกเว้น /auth/callback
-├── app-setup.ts          validation pipe, body limit, /uploads (ใช้ร่วมกับ e2e)
+├── app-setup.ts          validation pipe, body limit (ใช้ร่วมกับ e2e)
 ├── app.module.ts         guard ทั้งระบบ: CoreHubJwtGuard → PermissionsGuard
 ├── auth/                 ⬅ คัดลอกจาก reference implementation (แก้ได้เฉพาะ role-mapping / permissions)
 ├── common/               ⬅ คัดลอก: envelope, exception filter, pagination

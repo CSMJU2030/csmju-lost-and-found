@@ -385,6 +385,38 @@
         ]
       }
     },
+    "/api/v1/items/{id}/images/{imageId}": {
+      "get": {
+        "operationId": "ItemsController_image",
+        "parameters": [
+          {
+            "name": "id",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "imageId",
+            "required": true,
+            "in": "path",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": ""
+          }
+        },
+        "summary": "ไฟล์รูปของรายการ (bytes ดิบ ไม่ห่อ envelope) — ตรวจสิทธิ์ทุกครั้ง ไม่ cache\n(standards deployment.md ข้อ 4.3: attachment · nosniff · private, no-store)",
+        "tags": [
+          "Items"
+        ]
+      }
+    },
     "/api/v1/claims": {
       "get": {
         "operationId": "ClaimsController_list",
@@ -744,7 +776,7 @@
           },
           "imageUrl": {
             "type": "string",
-            "description": "รูปหลัก (path /uploads/...) หรือค่าว่าง"
+            "description": "รูปหลัก (path /api/v1/items/:id/images/:imageId — ต้อง login) หรือค่าว่าง"
           },
           "thumbnails": {
             "type": "array",
@@ -892,7 +924,7 @@
             ]
           },
           "images": {
-            "description": "รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) หรือ path /uploads/... ที่อัปโหลดไว้แล้ว",
+            "description": "รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) — เก็บในฐานข้อมูล ชนิดไฟล์ตรวจจาก byte ต้นไฟล์",
             "maxItems": 6,
             "type": "array",
             "items": {

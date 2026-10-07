@@ -64,7 +64,7 @@ export class CreateItemDto {
   @IsOptional() @IsIn(['normal', 'high'], { message: 'ความเร่งด่วนต้องเป็น normal หรือ high' })
   urgency?: ItemUrgencyValue;
 
-  /** รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) หรือ path /uploads/... ที่อัปโหลดไว้แล้ว */
+  /** รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) — เก็บในฐานข้อมูล ชนิดไฟล์ตรวจจาก byte ต้นไฟล์ */
   @IsOptional()
   @IsArray()
   @ArrayMaxSize(6, { message: 'แนบรูปได้ไม่เกิน 6 รูป' })

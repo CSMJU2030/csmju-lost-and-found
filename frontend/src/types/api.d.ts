@@ -137,6 +137,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/items/{id}/images/{imageId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * ไฟล์รูปของรายการ (bytes ดิบ ไม่ห่อ envelope) — ตรวจสิทธิ์ทุกครั้ง ไม่ cache
+         *     (standards deployment.md ข้อ 4.3: attachment · nosniff · private, no-store)
+         */
+        get: operations["ItemsController_image"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/claims": {
         parameters: {
             query?: never;
@@ -276,7 +296,7 @@ export interface components {
             status: "found" | "searching" | "returned";
             /** @enum {string} */
             urgency: "normal" | "high";
-            /** @description รูปหลัก (path /uploads/...) หรือค่าว่าง */
+            /** @description รูปหลัก (path /api/v1/items/:id/images/:imageId — ต้อง login) หรือค่าว่าง */
             imageUrl: string;
             thumbnails: string[];
             pinX?: number;
@@ -316,7 +336,7 @@ export interface components {
             timeLost: string;
             /** @enum {string} */
             urgency?: "normal" | "high";
-            /** @description รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) หรือ path /uploads/... ที่อัปโหลดไว้แล้ว */
+            /** @description รูปแบบ data URL (JPG/PNG/WEBP ไม่เกิน 2 MB ต่อรูป) — เก็บในฐานข้อมูล ชนิดไฟล์ตรวจจาก byte ต้นไฟล์ */
             images?: string[];
             pinX?: number;
             pinY?: number;
@@ -636,6 +656,26 @@ export interface operations {
             header?: never;
             path: {
                 id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    ItemsController_image: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                id: string;
+                imageId: string;
             };
             cookie?: never;
         };

@@ -1,6 +1,5 @@
 import { RequestMethod, ValidationPipe } from '@nestjs/common';
 import type { RouteInfo } from '@nestjs/common/interfaces';
-import { ConfigService } from '@nestjs/config';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 
 /**
@@ -15,12 +14,9 @@ export const ROUTES_OUTSIDE_API_PREFIX: RouteInfo[] = [{ path: 'auth/callback', 
 
 /** Everything main.ts applies before it listens, shared with the e2e suites. */
 export function configureApp(app: NestExpressApplication): void {
-  const config = app.get(ConfigService);
-
   // รูปภาพส่งมาเป็น data URL ใน JSON (สูงสุด 6 รูป รูปละไม่เกิน 2 MB)
   app.useBodyParser('json', { limit: '15mb' });
-  // รูปที่อัปโหลดแล้ว (/uploads/<uuid>.jpg) — ชื่อไฟล์เป็น UUID สุ่ม
-  app.useStaticAssets(config.get<string>('uploadDir', 'uploads'), { prefix: '/uploads/', index: false, maxAge: '7d' });
+  // รูปเก็บในฐานข้อมูล (ตาราง item_images) และเปิดผ่าน GET /api/v1/items/:id/images/:imageId — ไม่มีไฟล์บนดิสก์
 
   app.useGlobalPipes(
     new ValidationPipe({
