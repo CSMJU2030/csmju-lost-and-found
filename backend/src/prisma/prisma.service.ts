@@ -30,7 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
       ...(schema ? { options: `-c search_path="${schema}"` } : {}),
 
       // Cap concurrent connections so one instance cannot exhaust PostgreSQL.
-      max: config.get<number>('database.poolMax', 10),
+      max: Number(process.env.DATABASE_POOL_MAX) || 5,
 
       // Fail fast instead of queueing forever when the pool is saturated.
       connectionTimeoutMillis: config.get<number>('database.connectTimeoutMs', 5000),
