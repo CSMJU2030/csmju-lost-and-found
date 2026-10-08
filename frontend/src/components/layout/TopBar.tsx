@@ -6,17 +6,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import {
   Menu,
   Bell,
-  Settings,
   Shield,
-  CheckCircle2,
   ExternalLink,
   LogOut,
   PackageCheck,
   FileText,
   Search
 } from 'lucide-react';
-import { LogoMark } from '@/components/layout/Logo';
-import Modal from '@/components/ui/Modal';
 import { getReportType } from '@/lib/storage';
 import { api, DATA_CHANGED, signOut } from '@/lib/api';
 import { findMatches } from '@/lib/matching';
@@ -44,25 +40,11 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   const [isNotifOpen, setIsNotifOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
 
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
-  const [emailNotif, setEmailNotif] = useState(true);
-  const [soundNotif, setSoundNotif] = useState(false);
-  const [settingsSaved, setSettingsSaved] = useState(false);
-
   const displayName = member?.fullName || email || 'ผู้ใช้งาน';
   const initial = displayName.trim().charAt(0).toUpperCase() || 'U';
 
   const userMenuRef = useRef<HTMLDivElement>(null);
   const notifMenuRef = useRef<HTMLDivElement>(null);
-
-  // โหลดค่าตั้งค่าที่บันทึกไว้
-  useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem('userSettings') || '{}');
-      if (typeof saved.emailNotif === 'boolean') setEmailNotif(saved.emailNotif);
-      if (typeof saved.soundNotif === 'boolean') setSoundNotif(saved.soundNotif);
-    } catch {}
-  }, []);
 
   // โหลดรายการแจ้งเตือนและซิงค์สถานะการอ่าน
   // แอดมิน: เห็นรายการใหม่และคำขอที่รอตรวจ / ผู้ใช้ทั่วไป: เห็นเฉพาะเรื่องที่เกี่ยวกับรหัสนักศึกษาของตัวเอง
@@ -205,26 +187,6 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
   const unreadCount = notifications.filter(n => !n.read).length;
 
-  // เล่นเสียงสั้นๆ เมื่อมีแจ้งเตือนที่ยังไม่อ่านเพิ่มขึ้น (ถ้าเปิดไว้ในการตั้งค่า)
-  const prevUnreadRef = useRef<number | null>(null);
-  useEffect(() => {
-    const prev = prevUnreadRef.current;
-    prevUnreadRef.current = unreadCount;
-    if (prev === null || unreadCount <= prev || !soundNotif) return;
-    try {
-      const ctx = new AudioContext();
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.frequency.value = 880;
-      gain.gain.setValueAtTime(0.15, ctx.currentTime);
-      gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.3);
-      osc.connect(gain).connect(ctx.destination);
-      osc.start();
-      osc.stop(ctx.currentTime + 0.3);
-      osc.onended = () => ctx.close();
-    } catch {}
-  }, [unreadCount, soundNotif]);
-
   const handleNotificationClick = (notif: any) => {
     const savedReadState = JSON.parse(localStorage.getItem('readNotificationIds') || '[]');
     if (!savedReadState.includes(notif.id)) {
@@ -257,17 +219,18 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
   }, []);
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between gap-2 md:gap-4 h-16 px-3 sm:px-6 bg-white/80 backdrop-blur-xl border-b border-line">
+    <header className="sticky top-0 z-10 flex h-16 w-full items-center justify-between gap-4 border-b border-surface-variant bg-surface-container-lowest px-4 shadow-sm md:px-12">
 
       <div className="flex items-center gap-2 md:gap-3 flex-1 min-w-0">
         <button
           onClick={onMenuClick}
-          className="p-2 text-on-surface-variant rounded-xl hover:bg-surface-container hover:text-ink transition-colors cursor-pointer"
-          title="สลับเมนูข้าง"
+          className="md:hidden p-2 text-on-surface rounded-lg hover:bg-surface-variant/50 transition-colors cursor-pointer"
+          title="เปิดเมนู"
+          aria-label="เปิดเมนู"
         >
           <Menu className="w-5 h-5" />
         </button>
-        <span className={hasPageSearch ? '' : 'sm:hidden'}><LogoMark size={32} /></span>
+        <span className="md:hidden text-gradient font-display text-headline-md">Lost &amp; Found</span>
         {/* ค้นหาด่วน: ส่งคำค้นไปหน้ารายการของหาย (ไม่แสดงในหน้าที่มีช่องค้นหาหลักแล้ว) */}
         {!hasPageSearch && (
         <form
@@ -277,14 +240,14 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
             router.push(q ? `/items?q=${encodeURIComponent(q)}` : '/items');
             window.dispatchEvent(new CustomEvent('items-search', { detail: q }));
           }}
-          className="hidden sm:flex items-center flex-1 max-w-md relative"
+          className="hidden md:flex items-center flex-1 max-w-md mx-auto relative"
         >
-          <Search className="w-4 h-4 text-outline absolute left-3.5 pointer-events-none" />
+          <Search className="w-5 h-5 text-outline absolute left-3 pointer-events-none" />
           <input
             value={searchText}
             onChange={(e) => setSearchText(e.target.value)}
             placeholder="ค้นหาของหาย เช่น กระเป๋าสตางค์, บัตรนักศึกษา..."
-            className="w-full pl-10 pr-4 py-2 rounded-xl bg-surface-container/80 border border-transparent text-sm placeholder:text-outline focus:outline-hidden focus:bg-white focus:border-brand-200 focus:ring-4 focus:ring-brand-50 transition-all"
+            className="w-full rounded-full border border-outline-variant/50 bg-surface py-2.5 pl-10 pr-4 text-sm placeholder:text-outline transition-colors focus:border-primary-container focus:outline-hidden focus:ring-1 focus:ring-primary-container"
           />
         </form>
         )}
@@ -354,15 +317,6 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
           )}
         </div>
 
-        {/* Settings Button */}
-        <button 
-          onClick={() => setIsSettingsOpen(true)}
-          className="p-2.5 text-on-surface-variant rounded-xl hover:bg-brand-50 hover:text-primary-container transition-colors focus:outline-hidden cursor-pointer"
-          title="ตั้งค่าพื้นฐาน"
-        >
-          <Settings className="w-5 h-5" />
-        </button>
-
         {/* User Profile & Role Switcher Dropdown */}
         <div className="relative" ref={userMenuRef}>
           <button 
@@ -427,83 +381,6 @@ export default function TopBar({ onMenuClick }: TopBarProps) {
 
       </div>
 
-      {isSettingsOpen && (
-        <Modal
-          isOpen={isSettingsOpen}
-          onClose={() => { setIsSettingsOpen(false); setSettingsSaved(false); }}
-          title="การตั้งค่าพื้นฐานระบบ (System Settings)"
-        >
-          <div className="space-y-5 text-xs text-on-surface-variant">
-            {settingsSaved && (
-              <div className="p-3 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-xl flex items-center gap-2 font-semibold animate-fade-in">
-                <CheckCircle2 className="w-4 h-4" />
-                <span>บันทึกการตั้งค่าเรียบร้อยแล้ว</span>
-              </div>
-            )}
-
-            <div className="space-y-3">
-              <h4 className="font-bold text-on-surface border-b border-line pb-2 text-sm font-display">การตั้งค่าการแจ้งเตือน</h4>
-              
-              <div className="flex items-center justify-between p-3.5 bg-background rounded-xl border border-line">
-                <div>
-                  <p className="font-semibold text-on-surface">แจ้งเตือนผ่านอีเมล</p>
-                  <p className="text-[11px] text-secondary">รับอีเมลแจ้งเตือนเมื่อมีคนพบสิ่งของหรืออัปเดตคำขอ (จะส่งจริงเมื่อเชื่อมต่อ backend)</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={emailNotif} 
-                  onChange={(e) => setEmailNotif(e.target.checked)}
-                  className="w-4 h-4 text-primary-container rounded-sm cursor-pointer accent-primary-container"
-                />
-              </div>
-
-              <div className="flex items-center justify-between p-3.5 bg-background rounded-xl border border-line">
-                <div>
-                  <p className="font-semibold text-on-surface">เสียงแจ้งเตือนในระบบ</p>
-                  <p className="text-[11px] text-secondary">เล่นเสียงเตือนเบาๆ เมื่อมีรายการใหม่เข้ามา</p>
-                </div>
-                <input 
-                  type="checkbox" 
-                  checked={soundNotif} 
-                  onChange={(e) => setSoundNotif(e.target.checked)}
-                  className="w-4 h-4 text-primary-container rounded-sm cursor-pointer accent-primary-container"
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2 pt-2 border-t border-line">
-              <div className="flex items-center justify-between text-secondary text-[11px]">
-                <span>เวอร์ชันระบบ: <strong>v1.0.4 (Academic MIS)</strong></span>
-                <span>ผู้ใช้งาน: <strong>aom123@gmail.com</strong></span>
-              </div>
-            </div>
-
-            <div className="flex justify-end gap-2.5 pt-3 border-t border-line">
-              <button
-                onClick={() => setIsSettingsOpen(false)}
-                className="px-4 py-2 bg-surface-container hover:bg-surface-variant text-on-surface-variant font-semibold rounded-xl transition-colors cursor-pointer"
-              >
-                ปิด
-              </button>
-              <button
-                onClick={() => {
-                  try {
-                    localStorage.setItem('userSettings', JSON.stringify({ emailNotif, soundNotif }));
-                  } catch {}
-                  setSettingsSaved(true);
-                  setTimeout(() => {
-                    setSettingsSaved(false);
-                    setIsSettingsOpen(false);
-                  }, 1200);
-                }}
-                className="px-4 py-2 bg-primary-container hover:bg-primary text-white font-semibold rounded-xl shadow-xs transition-all cursor-pointer"
-              >
-                บันทึกการตั้งค่า
-              </button>
-            </div>
-          </div>
-        </Modal>
-      )}
     </header>
   );
 }

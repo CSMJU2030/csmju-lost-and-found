@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { Noto_Sans_Thai, Plus_Jakarta_Sans } from 'next/font/google';
 import './globals.css';
 import Sidebar from '@/components/layout/Sidebar';
@@ -27,15 +27,8 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // เปิด Sidebar อัตโนมัติบนเดสก์ท็อป (1024px ขึ้นไป)
+  // drawer ของมือถือ — ตั้งแต่ md (768px) ขึ้นไป sidebar แสดงถาวรด้วย CSS (ตามมาตรฐาน)
   const [sidebarOpen, setSidebarOpen] = useState(false);
-
-  useEffect(() => {
-    const handleResize = () => setSidebarOpen(window.innerWidth >= 1024);
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   return (
     <html lang="th" className={`${bodyFont.variable} ${displayFont.variable}`}>
@@ -47,8 +40,8 @@ export default function RootLayout({
           <div className="flex h-screen supports-[height:100dvh]:h-dvh overflow-hidden">
             <Sidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
 
-            <div className={`flex-1 flex flex-col min-w-0 transition-all duration-300 ${sidebarOpen ? 'lg:ml-[272px]' : 'lg:ml-0'}`}>
-              <TopBar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
+            <div className="flex-1 flex flex-col min-w-0 md:ml-64">
+              <TopBar onMenuClick={() => setSidebarOpen(true)} />
 
               <main className="flex-1 overflow-y-auto">
                 <div className="max-w-[1240px] mx-auto w-full px-4 sm:px-6 lg:px-8 py-4 md:py-6 lg:py-8">
